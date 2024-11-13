@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:quoter/Models/quote.dart';
 import 'package:quoter/Networking/network_helper.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/pages/favorites_page.dart';
@@ -14,7 +15,6 @@ import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 import '../Components/custom_icon_button.dart';
 import '../Components/quotation_mark.dart';
-import '../Models/quote.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
