@@ -1,11 +1,14 @@
 import 'dart:math' show Random, pi;
 
 import 'package:card_swiper/card_swiper.dart';
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:quoter/Components/custom_card.dart';
 import 'package:quoter/Models/quote.dart';
 import 'package:quoter/Networking/network_helper.dart';
 import 'package:quoter/constants.dart';
@@ -14,7 +17,6 @@ import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 import '../Components/custom_icon_button.dart';
-import '../Components/quotation_mark.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,25 +26,39 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  late AnimationController authorCardController;
-  late Animation authorCardAnimation;
   SwiperController swiperController = SwiperController();
+  late AnimationController animationController;
+  late Animation<double> animation;
 
-  late List quotes = [];
+  late List<Quote> quotes = [];
   late List<Quote> likedQuotes = [];
   bool isWaiting = false;
   late Quote currentQuote;
+
+  @override
+  void initState() {
+    super.initState();
+    getQuotes();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    swiperController.dispose();
+  }
 
   void getQuotes() async {
     setState(() {
       isWaiting = true;
     });
-    final result = [];
+    final result = <Quote>[];
     for (int i = 0; i < 5; i++) {
       final response = await fetchQuote();
-      if (response.statusCode == 200) {
-        final quote = await decodeQuote(response);
+      if (response?.statusCode == 200) {
+        final quote = await decodeQuote(response!);
         result.add(quote);
+      } else {
+        print('Returning Null');
       }
     }
     setState(() {
@@ -60,119 +76,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    getQuotes();
-    authorCardController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-    authorCardAnimation = Tween(begin: 0.0, end: pi / 2).animate(
-      CurvedAnimation(parent: authorCardController, curve: Curves.easeOut),
+  Widget displaySwiper(Size size) {
+    List<GlobalKey<FlipCardState>> flipCardKeys = List.generate(
+      quotes.length,
+      (index) => GlobalKey<FlipCardState>(),
     );
-  }
 
-  @override
-  void dispose() {
-    super.dispose();
-    swiperController.dispose();
-    authorCardController.dispose();
-  }
-
-  Widget displaySwiper() {
-    return Swiper(
-      controller: swiperController,
-      itemCount: quotes.length,
-      onIndexChanged: (index) {
-        authorCardController.reverse();
-        setState(() {
-          swiperController.index = index;
-        });
-      },
-      viewportFraction: 0.9,
-      itemHeight: double.infinity,
-      itemWidth: double.infinity,
-      scale: 0.8,
-      itemBuilder: (context, index) {
-        return Stack(
-          children: [
-            GestureDetector(
-              onTap: () {
-                if (authorCardAnimation.isCompleted) {
-                  authorCardController.reverse();
-                }
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: kPrimaryLighterDark,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    const Expanded(
-                      flex: 1,
-                      child: QuotationMark(
-                        alignment: Alignment.centerLeft,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Center(
-                          child: Text(
-                            quotes.isNotEmpty
-                                ? quotes[index].quote
-                                : 'Loading...',
-                            style: GoogleFonts.getFont('Montserrat',
-                                fontSize: 32,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      flex: 1,
-                      child: QuotationMark(
-                        alignment: Alignment.centerRight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                authorCardController.forward();
-              },
-              child: AnimatedBuilder(
-                animation: authorCardAnimation,
-                builder: (BuildContext context, Widget? child) {
-                  return Transform(
-                    alignment: Alignment.centerLeft,
-                    transform: Matrix4.rotationX(authorCardAnimation.value),
-                    child: child,
-                  );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: kSecondaryDark,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Center(
-                    child: Text(
-                      quotes.isNotEmpty ? quotes[index].author : 'Loading...',
-                      style: GoogleFonts.getFont('Moon Dance',
-                          fontSize: 40, color: kPrimaryDark),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    return SizedBox(
+      height: size.height * 0.5,
+      child: Swiper(
+        controller: swiperController,
+        itemCount: quotes.length,
+        onIndexChanged: (index) async {
+          final canVibrate = await Haptics.canVibrate();
+          await Haptics.vibrate(HapticsType.light);
+          setState(() {
+            swiperController.index = index;
+          });
+        },
+        viewportFraction: 0.8,
+        itemHeight: double.infinity,
+        itemWidth: double.infinity,
+        scale: 0.8,
+        itemBuilder: (context, index) => CustomCard(
+            flipCardKeys: flipCardKeys, quotes: quotes, index: index),
+      ),
     );
   }
 
@@ -235,7 +163,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   getQuotes();
                 });
               } catch (e) {
-                print(e);
+                displaySnackBar('$e');
               }
             },
             child: const Icon(
@@ -274,16 +202,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget displayLoadingAnimation() {
-    return Center(
-      child: LoadingAnimationWidget.discreteCircle(
-        color: kSecondaryDark,
-        secondRingColor: kPrimaryLighterDark,
-        size: 100,
-      ),
-    );
-  }
-
   void displayLikeButtonSnackBar(bool isLiked) {
     showTopSnackBar(
       Overlay.of(context),
@@ -316,6 +234,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.sizeOf(context);
     return Scaffold(
       drawer: SafeArea(
         child: Drawer(
@@ -350,7 +269,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   onPressed: () async {
                     Navigator.pop(context);
-                    var quotes = await Navigator.push(
+                    List<Quote> quotes = await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (BuildContext context) {
                             return FavoritesPage(likedQuotes: likedQuotes);
@@ -423,24 +342,64 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       backgroundColor: kPrimaryDark,
       appBar: displayAppBar(),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 16),
+        padding: const EdgeInsets.symmetric(
+          vertical: 25,
+        ),
         child: Column(
           children: [
             Expanded(
-              flex: 4,
-              child: isWaiting ? displayLoadingAnimation() : displaySwiper(),
-            ),
-            const SizedBox(
-              height: 18,
+              flex: 8,
+              child: isWaiting ? const LoadingRings() : displaySwiper(size),
             ),
             Expanded(
               flex: 1,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(quotes.length, (index) {
+                  return SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: index == swiperController.index
+                        ? Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            decoration: const BoxDecoration(
+                                color: kSecondaryDark, shape: BoxShape.circle),
+                          )
+                        : Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 5),
+                            decoration: const BoxDecoration(
+                                color: kPrimaryLighterDark,
+                                shape: BoxShape.circle),
+                          ),
+                  );
+                }),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Row(
                 children: displayButtons(),
               ),
-            )
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class LoadingRings extends StatelessWidget {
+  const LoadingRings({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: LoadingAnimationWidget.discreteCircle(
+        color: kSecondaryDark,
+        secondRingColor: kPrimaryLighterDark,
+        size: 100,
       ),
     );
   }

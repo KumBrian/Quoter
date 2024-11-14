@@ -6,19 +6,20 @@ import 'package:http/http.dart' as http;
 import '../Models/quote.dart';
 
 String apiKey = dotenv.env['API_KEY'] ?? '';
+String baseUrl = dotenv.env['BASE_URL'] ?? '';
 
-Future fetchQuote() async {
+Future<http.Response?> fetchQuote() async {
   final http.Response response = await http.get(
-      Uri.parse('https://api.api-ninjas.com/v1/quotes?category=happiness'),
+      Uri.parse('$baseUrl?category=happiness'),
       headers: {'X-Api-Key': apiKey});
 
   if (response.statusCode == 200) {
-    print(response);
+    print(response.body);
     return response;
   } else {
     print('Error: ${response.statusCode}');
   }
-  return 'Error getting Quotes';
+  return null;
 }
 
 Future<Quote> decodeQuote(http.Response response) async {
