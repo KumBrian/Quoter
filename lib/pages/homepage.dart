@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final quote = await decodeQuote(response!);
         result.add(quote);
       } else {
-        print('Returning Null');
+        debugPrint('Returning Null');
       }
     }
     setState(() {
@@ -187,7 +187,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             await Share.shareXFiles([XFile(file.path)],
                 text: "Quote of the Day 💬");
           } catch (e) {
-            print("Error sharing quote image: $e");
+            debugPrint("Error sharing quote image: $e");
           }
         },
         isLiked: false,

@@ -24,7 +24,7 @@ class _QuoteCardState extends State<QuoteCard> {
     showTopSnackBar(
       Overlay.of(context),
       CustomSnackBar.info(
-        backgroundColor: kSecondaryDark.withOpacity(0.9),
+        backgroundColor: kSecondaryDark.withValues(alpha: 0.9),
         textStyle: GoogleFonts.getFont('Montserrat',
             color: kPrimaryDark, fontSize: 20, fontWeight: FontWeight.w700),
         message: text,
