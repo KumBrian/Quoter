@@ -96,6 +96,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           controller: swiperController,
           itemCount: quotes.length,
           onIndexChanged: (index) async {
+            // ignore: unused_local_variable
             final canVibrate = await Haptics.canVibrate();
             await Haptics.vibrate(HapticsType.light);
             setState(() {
