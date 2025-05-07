@@ -7,7 +7,7 @@ void main() async {
   try {
     await dotenv.load();
   } catch (e) {
-    print('Error loading .env file: $e');
+    debugPrint('Error loading .env file: $e');
   }
   runApp(const MyApp());
 }
