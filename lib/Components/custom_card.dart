@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:quoter/Components/quotation_mark.dart';
 import 'package:quoter/constants.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class CustomCard extends StatelessWidget {
   const CustomCard({
@@ -58,20 +59,32 @@ class CustomCard extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Center(
-                  child: Text(
+                  child: AutoSizeText(
                     quotes.isNotEmpty ? quotes[index].quote : 'Loading...',
                     style: GoogleFonts.getFont('Montserrat',
                         fontSize: 32,
                         fontWeight: FontWeight.w500,
                         color: Colors.white),
+                    maxLines: 9,
                   ),
                 ),
               ),
             ),
-            const Expanded(
+            Expanded(
               flex: 1,
-              child: QuotationMark(
-                alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  AutoSizeText(
+                    quotes.isNotEmpty ? quotes[index].author : 'Loading...',
+                    style: GoogleFonts.getFont('Moon Dance',
+                        fontSize: 32, color: kSecondaryDark),
+                    maxLines: 1,
+                  ),
+                  const QuotationMark(
+                    alignment: Alignment.centerRight,
+                  ),
+                ],
               ),
             ),
           ],
