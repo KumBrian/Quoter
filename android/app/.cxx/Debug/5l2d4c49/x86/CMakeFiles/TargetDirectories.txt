@@ -1,0 +1,2 @@
+C:/Users/Ihimbru/Desktop/apps/Quoter/android/app/.cxx/Debug/5l2d4c49/x86/CMakeFiles/edit_cache.dir
+C:/Users/Ihimbru/Desktop/apps/Quoter/android/app/.cxx/Debug/5l2d4c49/x86/CMakeFiles/rebuild_cache.dir
