@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late List<Quote> likedQuotes = [];
   bool isWaiting = false;
   late Quote currentQuote;
+  RepaintBoundary? shareImage;
 
   @override
   void initState() {
@@ -95,31 +96,48 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Swiper(
           controller: swiperController,
           itemCount: quotes.length,
+          curve: Curves.decelerate,
           onIndexChanged: (index) async {
             // ignore: unused_local_variable
-            final canVibrate = await Haptics.canVibrate();
-            await Haptics.vibrate(HapticsType.light);
+
             setState(() {
               swiperController.index = index;
               currentIndex = index;
             });
           },
-          viewportFraction: 0.8,
+          viewportFraction: 0.85,
           itemHeight: double.infinity,
           itemWidth: double.infinity,
-          scale: 0.8,
+          scale: 0.85,
           itemBuilder: (context, index) {
             final isCurrent = index == currentIndex;
+            shareImage = RepaintBoundary(
+              key: previewContainer,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                color: kPrimaryDark,
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 12 / 16,
+                    child: CustomCard(
+                      flipCardKeys: flipCardKeys,
+                      quotes: quotes,
+                      index: index,
+                    ),
+                  ),
+                ),
+              ),
+            );
             return isCurrent
-                ? RepaintBoundary(
-                    key: previewContainer,
+                ? shareImage!
+                : AspectRatio(
+                    aspectRatio: 12 / 16,
                     child: CustomCard(
                         flipCardKeys: flipCardKeys,
                         quotes: quotes,
                         index: index),
-                  )
-                : CustomCard(
-                    flipCardKeys: flipCardKeys, quotes: quotes, index: index);
+                  );
           }),
     );
   }
@@ -162,6 +180,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         onTap: () async {
           //implement the sharing here
           //TODO: create pop up to select between copying text or saving image
+
           try {
             await Future.delayed(const Duration(
                 milliseconds: 100)); // slight delay helps sometimes
