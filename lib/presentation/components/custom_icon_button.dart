@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import '../constants.dart';
+import 'package:quoter/constants.dart';
 
 class CustomIconButton extends StatefulWidget {
   const CustomIconButton(
@@ -13,7 +12,7 @@ class CustomIconButton extends StatefulWidget {
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final void Function()? onTap;
   final bool isLiked;
 
   @override

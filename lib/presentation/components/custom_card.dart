@@ -1,32 +1,34 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:haptic_feedback/haptic_feedback.dart';
-import 'package:quoter/Components/quotation_mark.dart';
 import 'package:quoter/constants.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+import 'package:quoter/models/quote.dart';
+import 'package:quoter/presentation/components/quotation_mark.dart';
+import 'package:vibration/vibration.dart';
 
 class CustomCard extends StatelessWidget {
   const CustomCard({
     super.key,
-    required this.flipCardKeys,
-    required this.quotes,
-    required this.index,
+    required this.flipCardKey,
+    required this.quote,
   });
 
-  final List<GlobalKey<FlipCardState>> flipCardKeys;
-  final int index;
-  final List quotes;
+  final GlobalKey<FlipCardState> flipCardKey;
+  final Quote quote;
 
   @override
   Widget build(BuildContext context) {
     return FlipCard(
-      key: flipCardKeys[index],
+      key: flipCardKey,
       flipOnTouch: true,
       onFlip: () async {
-        // ignore: unused_local_variable
-        final canVibrate = await Haptics.canVibrate();
-        await Haptics.vibrate(HapticsType.light);
+        if (await Vibration.hasAmplitudeControl()) {
+          Vibration.vibrate(
+            duration: 50,
+            amplitude: 9,
+          );
+        }
       },
       front: Container(
         decoration: BoxDecoration(
@@ -34,10 +36,15 @@ class CustomCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
         ),
         child: Center(
-          child: Text(
-            quotes.isNotEmpty ? quotes[index].author : 'Loading...',
-            style: GoogleFonts.getFont('Moon Dance',
-                fontSize: 40, color: kPrimaryDark),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: AutoSizeText(
+              quote.author,
+              maxLines: 2,
+              maxFontSize: 42,
+              minFontSize: 36,
+              style: GoogleFonts.getFont('Moon Dance', color: kPrimaryDark),
+            ),
           ),
         ),
       ),
@@ -61,12 +68,11 @@ class CustomCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Center(
                   child: AutoSizeText(
-                    quotes.isNotEmpty ? quotes[index].quote : 'Loading...',
+                    quote.quote,
                     style: GoogleFonts.getFont('Montserrat',
-                        fontSize: 32,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white),
-                    maxLines: 9,
+                        fontWeight: FontWeight.w500, color: Colors.white),
+                    maxFontSize: 32,
+                    minFontSize: 24,
                   ),
                 ),
               ),
@@ -77,16 +83,21 @@ class CustomCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   AutoSizeText(
-                    quotes.isNotEmpty ? quotes[index].author : 'Loading...',
+                    quote.author,
                     style: GoogleFonts.getFont('Moon Dance',
-                        fontSize: 32, color: kSecondaryDark),
+                        color: kSecondaryDark),
                     maxLines: 1,
+                    maxFontSize: 32,
+                    minFontSize: 28,
                   ),
                   const QuotationMark(
                     alignment: Alignment.centerRight,
                   ),
                 ],
               ),
+            ),
+            const SizedBox(
+              height: 20,
             ),
           ],
         ),

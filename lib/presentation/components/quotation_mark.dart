@@ -1,7 +1,7 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../constants.dart';
+import 'package:quoter/constants.dart';
 
 class QuotationMark extends StatelessWidget {
   const QuotationMark({
@@ -17,12 +17,13 @@ class QuotationMark extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Align(
         alignment: alignment,
-        child: Text(
+        child: AutoSizeText(
           "\"",
+          maxLines: 1,
+          maxFontSize: 128,
+          minFontSize: 50,
           style: GoogleFonts.getFont('Montserrat',
-              fontSize: 128,
-              fontWeight: FontWeight.w900,
-              color: kSecondaryDark),
+              fontWeight: FontWeight.w900, color: kSecondaryDark),
         ),
       ),
     );
