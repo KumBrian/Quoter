@@ -8,7 +8,7 @@ class LoadingRings extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contextMain) {
     return Center(
       child: LoadingAnimationWidget.discreteCircle(
         color: kSecondaryDark,

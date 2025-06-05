@@ -12,7 +12,7 @@ class QuotationMark extends StatelessWidget {
   final Alignment alignment;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contextMain) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Align(

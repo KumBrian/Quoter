@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16.0, vertical: 16.0),
                 child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () => context.pop(),
                   child: const Icon(
                     Icons.cancel_sharp,
                     size: 50,
@@ -78,6 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: GestureDetector(
                   onTap: () {
+                    context.pop();
                     context.go('/home/favourites');
                   },
                   child: Row(

@@ -11,7 +11,7 @@ class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contextMain) {
     return Scaffold(
       backgroundColor: kPrimaryDark,
       appBar: AppBar(
@@ -30,7 +30,7 @@ class FavoritesPage extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => context.pop(context),
+            onTap: () => contextMain.pop(contextMain),
             child: const Icon(
               Icons.home_filled,
               color: kSecondaryDark,

@@ -18,7 +18,7 @@ class CustomCard extends StatelessWidget {
   final Quote quote;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contextMain) {
     return FlipCard(
       key: flipCardKey,
       flipOnTouch: true,

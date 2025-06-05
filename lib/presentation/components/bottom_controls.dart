@@ -31,7 +31,7 @@ class BottomControls extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext contextMain) {
     // We need two pieces of dynamic state:
     //  1) The current swiper index (so we know which quote is visible)
     //  2) The QuotesBloc state (so we know the full List<Quote>, including isLiked)
