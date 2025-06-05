@@ -5,8 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
-import 'package:quoter/bloc/quotes_bloc.dart';
+import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
+import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
+import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/bottom_controls.dart';
 import 'package:quoter/presentation/components/failure_widget.dart';
 import 'package:quoter/presentation/components/loading_rings.dart';
@@ -28,7 +30,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    context.read<QuotesBloc>().add(QuotesFetch());
+    context.read<QuotesBloc>().add(LoadQuotes());
   }
 
   void displaySnackBar(String text) {
@@ -149,7 +151,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: GestureDetector(
               onTap: () {
                 try {
-                  context.read<QuotesBloc>().add(QuotesFetch());
+                  context.read<QuotesBloc>().add(LoadQuotes());
                 } catch (e) {
                   displaySnackBar('$e');
                 }
@@ -199,20 +201,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (current is QuotesLoading && previous is! QuotesLoading) {
               return true;
             }
-            if (current is QuotesFailure && previous is! QuotesFailure) {
+            if (current is QuotesError && previous is! QuotesError) {
               return true;
             }
-            if (current is QuotesSuccess && previous is! QuotesSuccess) {
+            if (current is QuotesLoaded && previous is! QuotesLoaded) {
               return true;
             }
             return false;
           },
           listener: (context, state) {
-            if (state is QuotesFailure) {
-              displaySnackBar(state.error);
+            if (state is QuotesError) {
+              displaySnackBar(state.message);
             }
-            if (state is QuotesSuccess && _lastLikedIndex != null) {
-              final toggledQuote = state.quotes[_lastLikedIndex!];
+            if (state is QuotesLoaded && _lastLikedIndex != null) {
+              final toggledQuote = state.allQuotes[_lastLikedIndex!];
               final isNowLiked = toggledQuote.isLiked;
 
               showTopSnackBar(
@@ -239,14 +241,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (quoteState is QuotesLoading) {
               return const LoadingRings();
             }
-            if (quoteState is QuotesFailure) {
+            if (quoteState is QuotesError) {
               return FailureWidget(size: size);
             }
             if (quoteState is QuotesInitial) {
               return const LoadingRings();
             }
-            // At this point we know quoteState is QuotesSuccess (for the first time)
-            final allQuotes = (quoteState as QuotesSuccess).quotes;
+            final allQuotes = (quoteState as QuotesLoaded).allQuotes;
 
             return Column(
               children: [
@@ -262,11 +263,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 // ─── Bottom: BottomControls (reads live index + live quotes) ───
                 Expanded(
                   flex: 2,
-                  child: BottomControls(
-                    swiperController: swiperController,
-                    onLikeTapped: (index) {
-                      _lastLikedIndex = index;
-                      context.read<QuotesBloc>().add(ToggleLike(index));
+                  child: BlocBuilder<LikedQuotesBloc, LikedQuotesState>(
+                    builder: (context, likedState) {
+                      final favoriteSet = <Quote>{};
+                      if (likedState is LikedQuotesLoaded) {
+                        favoriteSet.addAll(likedState.likedQuotes);
+                      }
+                      final currentQuote = allQuotes[swiperController.index];
+                      final isLiked = favoriteSet
+                          .contains(allQuotes[swiperController.index]);
+                      return BottomControls(
+                        swiperController: swiperController,
+                        onLikeTapped: (index) {
+                          _lastLikedIndex = index;
+                          final bloc = context.read<LikedQuotesBloc>();
+                          if (isLiked) {
+                            bloc.add(RemoveFavorite(currentQuote, context));
+                          } else {
+                            bloc.add(AddFavorite(currentQuote, context));
+                          }
+                        },
+                      );
                     },
                   ),
                 ),

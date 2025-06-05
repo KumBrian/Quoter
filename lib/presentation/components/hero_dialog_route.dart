@@ -11,7 +11,7 @@ class HeroDialogRoute<T> extends PageRoute<T> {
     required WidgetBuilder builder,
     super.settings,
     super.fullscreenDialog,
-  })  : _builder = builder;
+  }) : _builder = builder;
 
   final WidgetBuilder _builder;
 

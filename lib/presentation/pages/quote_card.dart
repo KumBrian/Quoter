@@ -2,9 +2,8 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quoter/bloc/quotes_bloc.dart';
+import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
-import 'package:quoter/data/repository/hive_quote.dart';
 import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/custom_icon_button.dart';
 import 'package:quoter/presentation/components/quotation_mark.dart';
@@ -30,15 +29,18 @@ class QuoteCard extends StatelessWidget {
       );
     }
 
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 50.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 500,
+    final Size size = MediaQuery.of(context).size;
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32.0, vertical: 100),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 4,
+              child: Container(
+                height: size.height * 0.5,
                 decoration: BoxDecoration(
                   color: kPrimaryLighterDark,
                   borderRadius: BorderRadius.circular(30),
@@ -61,9 +63,10 @@ class QuoteCard extends StatelessWidget {
                             quote.quote,
                             style: GoogleFonts.getFont('Montserrat',
                                 fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.none,
                                 color: Colors.white),
-                            maxFontSize: 32,
-                            minFontSize: 24,
+                            minFontSize: 18,
+                            maxLines: 9,
                           ),
                         ),
                       ),
@@ -76,10 +79,10 @@ class QuoteCard extends StatelessWidget {
                           AutoSizeText(
                             quote.author,
                             style: GoogleFonts.getFont('Moon Dance',
+                                decoration: TextDecoration.none,
                                 color: kSecondaryDark),
-                            maxLines: 1,
-                            maxFontSize: 32,
-                            minFontSize: 28,
+                            maxLines: 2,
+                            minFontSize: 22,
                           ),
                           const QuotationMark(
                             alignment: Alignment.centerRight,
@@ -93,55 +96,46 @@ class QuoteCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                flex: 1,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BlocBuilder<QuotesBloc, QuotesState>(
-                      builder: (context, state) {
-                        if (state is QuotesInitial) return Container();
-                        if (state is QuotesLoading) return Container();
-                        if (state is QuotesFailure) return Container();
-                        if (state is QuotesSuccess) {
-                          return CustomIconButton(
-                            icon: Icons.delete,
-                            label: 'Delete',
-                            onTap: () {
-                              if (state.quotes.contains(quote)) {
-                                context.read<QuotesBloc>().add(
-                                    ToggleLike(state.quotes.indexOf(quote)));
-                              } else {
-                                LikedQuotesRepository().removeQuote(quote);
-                              }
-                              displaySnackBar('Removed From Favorites');
-                            },
-                            isLiked: false,
-                          );
-                        }
-                        return Container();
-                      },
-                    ),
-                    CustomIconButton(
-                      icon: Icons.copy_rounded,
-                      label: 'Copy',
-                      onTap: () async {
-                        // await Clipboard.setData(ClipboardData(
-                        //     text:
-                        //         "`${widget.quote.quote}`\n\nBy ${widget.quote.author}"));
-                        // displaySnackBar('Copied');
-                      },
-                      isLiked: false,
-                    ),
-                  ],
-                ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BlocBuilder<QuotesBloc, QuotesState>(
+                    builder: (context, state) {
+                      if (state is QuotesInitial) return Container();
+                      if (state is QuotesLoading) return Container();
+                      if (state is QuotesError) return Container();
+                      if (state is QuotesLoaded) {
+                        return CustomIconButton(
+                          icon: Icons.delete,
+                          label: 'Delete',
+                          onTap: () {
+                            //TODO: Remove From Favorites
+                            displaySnackBar('Removed From Favorites');
+                          },
+                          isLiked: false,
+                        );
+                      }
+                      return Container();
+                    },
+                  ),
+                  CustomIconButton(
+                    icon: Icons.copy_rounded,
+                    label: 'Copy',
+                    onTap: () async {
+                      // await Clipboard.setData(ClipboardData(
+                      //     text:
+                      //         "`${widget.quote.quote}`\n\nBy ${widget.quote.author}"));
+                      // displaySnackBar('Copied');
+                    },
+                    isLiked: false,
+                  ),
+                ],
               ),
-              const Expanded(
-                flex: 1,
-                child: SizedBox(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

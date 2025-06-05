@@ -20,10 +20,13 @@ class QuotationMark extends StatelessWidget {
         child: AutoSizeText(
           "\"",
           maxLines: 1,
-          maxFontSize: 128,
           minFontSize: 50,
-          style: GoogleFonts.getFont('Montserrat',
-              fontWeight: FontWeight.w900, color: kSecondaryDark),
+          style: GoogleFonts.getFont(
+            'Montserrat',
+            fontWeight: FontWeight.w900,
+            color: kSecondaryDark,
+            decoration: TextDecoration.none,
+          ),
         ),
       ),
     );

@@ -10,8 +10,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
-import 'package:quoter/bloc/quotes_bloc.dart';
+import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
+import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
+import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/custom_icon_button.dart';
 import 'package:quoter/presentation/components/quote_swiper.dart';
 import 'package:share_plus/share_plus.dart';
@@ -22,8 +24,6 @@ class BottomControls extends StatelessWidget {
   final SwiperController swiperController;
   final void Function(int) onLikeTapped;
 
-  /// Instead of passing a static List<Quote>, we will read the current
-  /// list from QuotesBloc inside this widget. That way it always stays up‐to‐date.
   const BottomControls({
     super.key,
     required this.swiperController,
@@ -46,7 +46,7 @@ class BottomControls extends StatelessWidget {
           builder: (context, quoteState) {
             // If QuotesBloc isn’t in success state, we can’t show anything meaningful.
             // Just disable all buttons.
-            if (quoteState is! QuotesSuccess) {
+            if (quoteState is! QuotesLoaded) {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -73,12 +73,11 @@ class BottomControls extends StatelessWidget {
             }
 
             // Now we know quoteState is QuotesSuccess:
-            final allQuotes = (quoteState).quotes;
+            final allQuotes = quoteState.allQuotes;
 
             // Make sure currentIndex is in bounds
             final clampedIndex = currentIndex.clamp(0, allQuotes.length - 1);
-            final currentQuote = allQuotes[clampedIndex];
-            final isLiked = currentQuote.isLiked;
+            final currentQuote = allQuotes[currentIndex];
 
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -116,13 +115,32 @@ class BottomControls extends StatelessWidget {
                 ),
 
                 // ─── LIKE ───
-                CustomIconButton(
-                  icon: Icons.favorite,
-                  label: 'Like',
-                  isLiked: isLiked,
-                  onTap: () {
-                    // Tell the parent “we want to like/unlike at this index”
-                    onLikeTapped(clampedIndex);
+                BlocBuilder<SwiperCubit, int>(
+                  builder: (context, newIndex) {
+                    return BlocBuilder<LikedQuotesBloc, LikedQuotesState>(
+                      builder: (context, likedState) {
+                        final favoriteSet = <Quote>{};
+                        if (likedState is LikedQuotesLoaded) {
+                          favoriteSet.addAll(likedState.likedQuotes);
+                        }
+                        final currentQuote = allQuotes[newIndex];
+                        final isLiked = favoriteSet.contains(currentQuote);
+
+                        return CustomIconButton(
+                          icon: Icons.favorite,
+                          label: 'Like',
+                          isLiked: isLiked,
+                          onTap: () {
+                            final bloc = context.read<LikedQuotesBloc>();
+                            if (isLiked) {
+                              bloc.add(RemoveFavorite(currentQuote, context));
+                            } else {
+                              bloc.add(AddFavorite(currentQuote, context));
+                            }
+                          },
+                        );
+                      },
+                    );
                   },
                 ),
 
@@ -156,10 +174,14 @@ class BottomControls extends StatelessWidget {
 
                       // **Here’s the fix**: we now use `currentQuote.author`
                       // from the *up‐to‐date* QuotesBloc state, instead of any stale list.
-                      await Share.shareXFiles(
-                        [XFile(file.path)],
-                        text: "Quote of the Day By ${currentQuote.author}",
-                      );
+
+                      await SharePlus.instance.share(ShareParams(
+                          text: "Quote of the Day By ${currentQuote.author}",
+                          files: [XFile(file.path)]));
+                      // await Share.shareXFiles(
+                      //   [XFile(file.path)],
+                      //   text: "Quote of the Day By ${currentQuote.author}",
+                      // );
                     } catch (e) {
                       debugPrint("Error sharing quote image: $e");
                     }
