@@ -30,7 +30,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    context.read<QuotesBloc>().add(LoadQuotes());
   }
 
   void displaySnackBar(String text) {
@@ -214,28 +213,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (state is QuotesError) {
               displaySnackBar(state.message);
             }
-            if (state is QuotesLoaded && _lastLikedIndex != null) {
-              final toggledQuote = state.allQuotes[_lastLikedIndex!];
-              final isNowLiked = toggledQuote.isLiked;
+            if (state is QuotesLoaded) {
+              // ✅ Reset swiper index to 0 on refresh
+              context.read<SwiperCubit>().updateIndex(0);
 
-              showTopSnackBar(
-                Overlay.of(context),
-                CustomSnackBar.info(
-                  backgroundColor: isNowLiked
-                      ? kSecondaryDark.withAlpha(200)
-                      : kPrimaryDark.withAlpha(200),
-                  textStyle: GoogleFonts.getFont(
-                    'Montserrat',
-                    color: isNowLiked ? kPrimaryDark : Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w100,
+              // Handle like notification if needed
+              if (_lastLikedIndex != null) {
+                final toggledQuote = state.allQuotes[_lastLikedIndex!];
+                final isNowLiked = toggledQuote.isLiked;
+
+                showTopSnackBar(
+                  Overlay.of(context),
+                  CustomSnackBar.info(
+                    backgroundColor: isNowLiked
+                        ? kSecondaryDark.withAlpha(200)
+                        : kPrimaryDark.withAlpha(200),
+                    textStyle: GoogleFonts.getFont(
+                      'Montserrat',
+                      color: isNowLiked ? kPrimaryDark : Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w100,
+                    ),
+                    message: isNowLiked
+                        ? 'You Liked a Quote By ${toggledQuote.author}'
+                        : 'You Disliked the Quote By ${toggledQuote.author}',
                   ),
-                  message: isNowLiked
-                      ? 'You Liked a Quote By ${toggledQuote.author}'
-                      : 'You Disliked the Quote By ${toggledQuote.author}',
-                ),
-              );
-              _lastLikedIndex = null;
+                );
+
+                _lastLikedIndex = null;
+              }
             }
           },
           builder: (context, quoteState) {
@@ -275,15 +281,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           .contains(allQuotes[swiperController.index]);
                       return BottomControls(
                         swiperController: swiperController,
-                        onLikeTapped: (index) {
-                          _lastLikedIndex = index;
-                          final bloc = context.read<LikedQuotesBloc>();
-                          if (isLiked) {
-                            bloc.add(RemoveFavorite(currentQuote, context));
-                          } else {
-                            bloc.add(AddFavorite(currentQuote, context));
-                          }
-                        },
                       );
                     },
                   ),

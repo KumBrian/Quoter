@@ -8,8 +8,6 @@ import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/single_quote_card.dart';
 import 'package:vibration/vibration.dart';
 
-final GlobalKey previewContainer = GlobalKey();
-
 class QuoteSwiper extends StatefulWidget {
   const QuoteSwiper(
       {super.key, required this.allQuotes, required this.swiperController});
@@ -72,17 +70,10 @@ class _QuoteSwiperState extends State<QuoteSwiper> {
                   itemWidth: double.infinity,
                   scale: 1,
                   itemBuilder: (context, index) {
-                    final card = RepaintBoundary(
-                        key: previewContainer,
-                        child: SingleQuoteCard(
-                            quote: widget.allQuotes[index],
-                            flipKey: flipCardKeys[index]));
-                    return index == currentIndex
-                        ? card
-                        : SingleQuoteCard(
-                            quote: widget.allQuotes[index],
-                            flipKey: flipCardKeys[index],
-                          );
+                    return SingleQuoteCard(
+                      quote: widget.allQuotes[index],
+                      flipKey: flipCardKeys[index],
+                    );
                   }));
         },
       ),

@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui' as ui;
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,37 +14,43 @@ import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/custom_icon_button.dart';
-import 'package:quoter/presentation/components/quote_swiper.dart';
+import 'package:quoter/presentation/components/quotation_mark.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
-class BottomControls extends StatelessWidget {
+class BottomControls extends StatefulWidget {
   final SwiperController swiperController;
-  final void Function(int) onLikeTapped;
+  // final void Function(int) onLikeTapped;
 
   const BottomControls({
     super.key,
     required this.swiperController,
-    required this.onLikeTapped,
+    // required this.onLikeTapped,
   });
 
   @override
+  State<BottomControls> createState() => _BottomControlsState();
+}
+
+class _BottomControlsState extends State<BottomControls> {
+  final ScreenshotController screenshotController = ScreenshotController();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext contextMain) {
-    // We need two pieces of dynamic state:
-    //  1) The current swiper index (so we know which quote is visible)
-    //  2) The QuotesBloc state (so we know the full List<Quote>, including isLiked)
-    //
-    // We’ll nest a BlocBuilder for SwiperCubit around a BlocBuilder for QuotesBloc.
-    // Whenever the swiper index changes, the SwiperBuilder rebuilds; whenever
-    // QuotesBloc emits a new state, the QuotesBuilder rebuilds. Both combine to give us
-    // the single “currentQuote” object at index = current swiper index.
+    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+
     return BlocBuilder<SwiperCubit, int>(
       builder: (context, currentIndex) {
         return BlocBuilder<QuotesBloc, QuotesState>(
           builder: (context, quoteState) {
-            // If QuotesBloc isn’t in success state, we can’t show anything meaningful.
-            // Just disable all buttons.
             if (quoteState is! QuotesLoaded) {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -76,7 +81,6 @@ class BottomControls extends StatelessWidget {
             final allQuotes = quoteState.allQuotes;
 
             // Make sure currentIndex is in bounds
-            final clampedIndex = currentIndex.clamp(0, allQuotes.length - 1);
             final currentQuote = allQuotes[currentIndex];
 
             return Row(
@@ -90,12 +94,8 @@ class BottomControls extends StatelessWidget {
                   onTap: allQuotes.isEmpty
                       ? null
                       : () {
-                          // Pick a random new index and move the SwiperController
                           final newIndex = Random().nextInt(allQuotes.length);
-                          swiperController.move(newIndex);
-
-                          // Also notify SwiperCubit of the index change so any other
-                          // listeners (including this bottom row) rebuild:
+                          widget.swiperController.move(newIndex);
                           context.read<SwiperCubit>().updateIndex(newIndex);
 
                           showTopSnackBar(
@@ -151,29 +151,95 @@ class BottomControls extends StatelessWidget {
                   isLiked: false,
                   onTap: () async {
                     try {
-                      // Slight delay so the RepaintBoundary is fully painted
+                      final imageWidget = Screenshot(
+                        controller: screenshotController,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: kPrimaryDark,
+                          ),
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Center(
+                              child: AspectRatio(
+                                aspectRatio: 12 / 16,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: kPrimaryLighterDark,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      const Expanded(
+                                        flex: 1,
+                                        child: QuotationMark(
+                                          alignment: Alignment.centerLeft,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0),
+                                          child: Center(
+                                            child: AutoSizeText(
+                                              currentQuote.quote,
+                                              style: GoogleFonts.getFont(
+                                                  'Montserrat',
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.white),
+                                              minFontSize: 18,
+                                              maxLines: 9,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            AutoSizeText(
+                                              currentQuote.author,
+                                              style: GoogleFonts.getFont(
+                                                  'Moon Dance',
+                                                  color: kSecondaryDark),
+                                              minFontSize: 20,
+                                              maxLines: 1,
+                                            ),
+                                            const QuotationMark(
+                                              alignment: Alignment.centerRight,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
                       await Future.delayed(const Duration(milliseconds: 100));
                       await WidgetsBinding.instance.endOfFrame;
 
-                      // Grab the image of the currently visible card
-                      final boundary = previewContainer.currentContext!
-                          .findRenderObject() as RenderRepaintBoundary;
-                      if (boundary.debugNeedsPaint) {
-                        await Future.delayed(const Duration(milliseconds: 20));
-                      }
+                      final imageFile =
+                          await screenshotController.captureFromWidget(
+                        imageWidget,
+                        pixelRatio: pixelRatio,
+                      );
 
-                      final image = await boundary.toImage(pixelRatio: 3.0);
-                      final byteData = await image.toByteData(
-                          format: ui.ImageByteFormat.png);
-                      final pngBytes = byteData!.buffer.asUint8List();
-
-                      final tempDir = await getTemporaryDirectory();
-                      final file =
-                          await File('${tempDir.path}/quote.png').create();
-                      await file.writeAsBytes(pngBytes);
-
-                      // **Here’s the fix**: we now use `currentQuote.author`
-                      // from the *up‐to‐date* QuotesBloc state, instead of any stale list.
+                      final appDir = await getApplicationDocumentsDirectory();
+                      final file = await File(
+                              '${appDir.path}/quote${DateTime.now().millisecondsSinceEpoch}.png')
+                          .create();
+                      await file.writeAsBytes(imageFile);
 
                       await SharePlus.instance.share(ShareParams(
                           text: "Quote of the Day By ${currentQuote.author}",

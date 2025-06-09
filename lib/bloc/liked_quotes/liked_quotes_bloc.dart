@@ -40,18 +40,21 @@ class LikedQuotesBloc extends Bloc<LikedQuotesEvent, LikedQuotesState> {
     await repository.addQuote(event.quote);
     // 2) Build new list
     final newList = List<Quote>.from(current)..add(event.quote);
-    showTopSnackBar(
-      Overlay.of(event.context),
-      CustomSnackBar.info(
-          backgroundColor: kSecondaryDark.withAlpha(200),
-          textStyle: GoogleFonts.getFont(
-            'Montserrat',
-            color: kPrimaryDark,
-            fontSize: 20,
-            fontWeight: FontWeight.w100,
-          ),
-          message: 'You Liked a Quote By ${event.quote.author}'),
-    );
+
+    if (event.context.mounted) {
+      showTopSnackBar(
+        Overlay.of(event.context),
+        CustomSnackBar.info(
+            backgroundColor: kSecondaryDark.withAlpha(200),
+            textStyle: GoogleFonts.getFont(
+              'Montserrat',
+              color: kPrimaryDark,
+              fontSize: 20,
+              fontWeight: FontWeight.w100,
+            ),
+            message: 'You Liked a Quote By ${event.quote.author}'),
+      );
+    }
     emit(LikedQuotesLoaded(newList));
   }
 
@@ -65,18 +68,21 @@ class LikedQuotesBloc extends Bloc<LikedQuotesEvent, LikedQuotesState> {
     await repository.removeQuote(event.quote);
     // 2) Build new list
     final newList = current.where((q) => q != event.quote).toList();
-    showTopSnackBar(
-      Overlay.of(event.context),
-      CustomSnackBar.info(
-          backgroundColor: kPrimaryDark.withAlpha(200),
-          textStyle: GoogleFonts.getFont(
-            'Montserrat',
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w100,
-          ),
-          message: 'You DisLiked a Quote By ${event.quote.author}'),
-    );
+
+    if (event.context.mounted) {
+      showTopSnackBar(
+        Overlay.of(event.context),
+        CustomSnackBar.info(
+            backgroundColor: kPrimaryDark.withAlpha(200),
+            textStyle: GoogleFonts.getFont(
+              'Montserrat',
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w100,
+            ),
+            message: 'You DisLiked a Quote By ${event.quote.author}'),
+      );
+    }
     emit(LikedQuotesLoaded(newList));
   }
 }
