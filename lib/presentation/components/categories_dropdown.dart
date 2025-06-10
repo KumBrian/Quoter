@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
+import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/presentation/extensions/string_extensions.dart';
 
@@ -62,10 +64,14 @@ class CategoriesDropdown extends StatelessWidget {
               onSelected: (value) {
                 if (value == 'Surprise Me') {
                   context.read<CategoryCubit>().clearCategory();
+                  context.read<QuotesBloc>().add(LoadQuotes(category: ''));
                 } else {
                   context
                       .read<CategoryCubit>()
                       .updateCategory(value!.toTitleCase);
+                  context.pop();
+                  context.read<QuotesBloc>().add(LoadQuotes(
+                      category: context.read<CategoryCubit>().state));
                 }
               },
               dropdownMenuEntries: List.generate(

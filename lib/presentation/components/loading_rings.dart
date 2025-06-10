@@ -5,7 +5,9 @@ import 'package:quoter/constants.dart';
 class LoadingRings extends StatelessWidget {
   const LoadingRings({
     super.key,
+    required this.size,
   });
+  final double size;
 
   @override
   Widget build(BuildContext contextMain) {
@@ -13,7 +15,7 @@ class LoadingRings extends StatelessWidget {
       child: LoadingAnimationWidget.discreteCircle(
         color: kSecondaryDark,
         secondRingColor: kPrimaryLighterDark,
-        size: 100,
+        size: size,
       ),
     );
   }
