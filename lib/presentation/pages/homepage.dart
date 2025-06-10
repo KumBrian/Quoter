@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
+import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
+import 'package:quoter/data/repository/category_repository.dart';
 import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/bottom_controls.dart';
 import 'package:quoter/presentation/components/categories_dropdown.dart';
@@ -18,6 +20,7 @@ import 'package:quoter/presentation/components/custom_text_field.dart';
 import 'package:quoter/presentation/components/failure_widget.dart';
 import 'package:quoter/presentation/components/loading_rings.dart';
 import 'package:quoter/presentation/components/quote_swiper.dart';
+import 'package:quoter/presentation/extensions/string_extensions.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
@@ -66,6 +69,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           backgroundColor: kPrimaryDark,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 30,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -136,35 +140,84 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             categoryDescriptionController),
                                     CustomButton(
                                       label: 'get suggestions',
-                                      onPressed: () {},
+                                      onPressed: () async {
+                                        try {
+                                          context
+                                              .read<CategorySuggestionCubit>()
+                                              .setLoading();
+                                          context
+                                              .read<CategorySuggestionCubit>()
+                                              .updateSuggestion(
+                                                  await CategoryRepository()
+                                                      .fetchCategory(
+                                                          categoryDescriptionController
+                                                              .text
+                                                              .toTitleCase));
+                                        } catch (e) {
+                                          displaySnackBar('$e');
+                                        }
+                                      },
                                       icon: HugeIcons
                                           .strokeRoundedArtificialIntelligence08,
                                     ),
-                                    SizedBox(
-                                      height: 400,
-                                      child: ListView.builder(
-                                          scrollDirection: Axis.vertical,
-                                          physics: BouncingScrollPhysics(),
-                                          itemBuilder: (context, index) {
-                                            return Card(
-                                              elevation: 0,
-                                              color: kPrimaryDark,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 20.0,
-                                                        vertical: 15),
-                                                child: Text(
-                                                  '$index',
-                                                  style: GoogleFonts.getFont(
-                                                      'Montserrat',
-                                                      fontSize: 18,
-                                                      color: Colors.white),
-                                                ),
+                                    BlocBuilder<CategorySuggestionCubit,
+                                        CategorySuggestionState>(
+                                      builder: (context, categoryState) {
+                                        if (categoryState
+                                            is CategorySuggestionLoading) {
+                                          return const LoadingRings(
+                                            size: 50,
+                                          );
+                                        }
+
+                                        if (categoryState
+                                            is CategorySuggestionError) {
+                                          return FailureWidget(size: size);
+                                        }
+                                        if (categoryState
+                                            is CategorySuggestionLoaded) {
+                                          return InkWell(
+                                            onTap: () {
+                                              context
+                                                  .read<CategoryCubit>()
+                                                  .updateCategory(categoryState
+                                                      .suggestion.toTitleCase);
+                                              context
+                                                  .read<
+                                                      CategorySuggestionCubit>()
+                                                  .clearSuggestion();
+                                              categoryDescriptionController
+                                                  .clear();
+                                              context.pop();
+                                              context.read<QuotesBloc>().add(
+                                                  LoadQuotes(
+                                                      category: context
+                                                          .read<CategoryCubit>()
+                                                          .state));
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                  color: kPrimaryDark,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          15)),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20.0,
+                                                      vertical: 30),
+                                              child: Text(
+                                                categoryState
+                                                    .suggestion.toTitleCase,
+                                                style: GoogleFonts.getFont(
+                                                    'Montserrat',
+                                                    fontSize: 20,
+                                                    color: Colors.white),
                                               ),
-                                            );
-                                          },
-                                          itemCount: 20),
+                                            ),
+                                          );
+                                        }
+                                        return SizedBox.shrink();
+                                      },
                                     ),
                                   ],
                                 ),
@@ -343,13 +396,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
           builder: (context, quoteState) {
             if (quoteState is QuotesLoading) {
-              return const LoadingRings();
+              return const LoadingRings(
+                size: 100,
+              );
             }
             if (quoteState is QuotesError) {
               return FailureWidget(size: size);
             }
             if (quoteState is QuotesInitial) {
-              return const LoadingRings();
+              return const LoadingRings(
+                size: 100,
+              );
             }
             final allQuotes = (quoteState as QuotesLoaded).allQuotes;
 

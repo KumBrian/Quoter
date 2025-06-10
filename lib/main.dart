@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
+import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
                 ..add(LoadQuotes(category: ''))),
           BlocProvider(create: (context) => SwiperCubit()),
           BlocProvider(create: (context) => CategoryCubit()),
+          BlocProvider(create: (context) => CategorySuggestionCubit()),
           BlocProvider(create: (context) => ShareImageCubit()),
           BlocProvider(
             create: (context) => LikedQuotesBloc(LikedQuotesRepository())
