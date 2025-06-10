@@ -8,13 +8,13 @@ class QuotesRepository {
   QuotesDataProvider quotesDataProvider;
   QuotesRepository({required this.quotesDataProvider});
 
-  Future<List<Quote>> fetchQuotes() async {
+  Future<List<Quote>> fetchQuotes(String category) async {
     List<Quote> quotes = [];
     try {
-      for (int i = 0; i < 5; i++) {
-        final response = await quotesDataProvider.fetchQuotes();
-        final data = jsonDecode(response);
-        quotes.add(Quote.fromJson(data));
+      final response = await quotesDataProvider.fetchQuotes(category);
+      final data = jsonDecode(response);
+      for (int i = 0; i < data.length; i++) {
+        quotes.add(Quote.fromJson(data, i));
       }
     } catch (e) {
       debugPrint("Error fetching quotes: $e");

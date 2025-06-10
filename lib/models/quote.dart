@@ -50,10 +50,10 @@ class Quote {
     };
   }
 
-  factory Quote.fromJson(List quote) {
+  factory Quote.fromJson(List quote, int index) {
     return Quote(
-      author: quote[0]['author']!,
-      quote: quote[0]['quote']!,
+      author: quote[index]['author']!,
+      quote: quote[index]['quote']!,
       isLiked: false,
     );
   }

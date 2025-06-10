@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/bottom_controls.dart';
+import 'package:quoter/presentation/components/categories_dropdown.dart';
+import 'package:quoter/presentation/components/custom_button.dart';
+import 'package:quoter/presentation/components/custom_text_field.dart';
 import 'package:quoter/presentation/components/failure_widget.dart';
 import 'package:quoter/presentation/components/loading_rings.dart';
 import 'package:quoter/presentation/components/quote_swiper.dart';
@@ -25,6 +30,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final SwiperController swiperController = SwiperController();
+  final TextEditingController categoryDescriptionController =
+      TextEditingController();
   int? _lastLikedIndex;
 
   @override
@@ -55,7 +62,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Scaffold(
       drawer: SafeArea(
         child: Drawer(
-          width: 250,
+          width: 300,
           backgroundColor: kPrimaryDark,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,6 +91,90 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     children: [
                       Text(
                         'FAVOURITES',
+                        style: GoogleFonts.getFont(
+                          'Montserrat',
+                          fontSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              CategoriesDropdown(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: GestureDetector(
+                  onTap: () {
+                    context.pop();
+                    showModalBottomSheet(
+                        context: context,
+                        elevation: 0,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        sheetAnimationStyle:
+                            AnimationStyle(curve: Curves.decelerate),
+                        barrierColor: Colors.transparent,
+                        builder: (context) {
+                          return Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 40),
+                              height: 700,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: kPrimaryLighterDark,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  spacing: 20,
+                                  children: [
+                                    CustomTextField(
+                                        categoryDescriptionController:
+                                            categoryDescriptionController),
+                                    CustomButton(
+                                      label: 'get suggestions',
+                                      onPressed: () {},
+                                      icon: HugeIcons
+                                          .strokeRoundedArtificialIntelligence08,
+                                    ),
+                                    SizedBox(
+                                      height: 400,
+                                      child: ListView.builder(
+                                          scrollDirection: Axis.vertical,
+                                          physics: BouncingScrollPhysics(),
+                                          itemBuilder: (context, index) {
+                                            return Card(
+                                              elevation: 0,
+                                              color: kPrimaryDark,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20.0,
+                                                        vertical: 15),
+                                                child: Text(
+                                                  '$index',
+                                                  style: GoogleFonts.getFont(
+                                                      'Montserrat',
+                                                      fontSize: 18,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          itemCount: 20),
+                                    ),
+                                  ],
+                                ),
+                              ));
+                        });
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'Describe category',
                         style: GoogleFonts.getFont(
                           'Montserrat',
                           fontSize: 24,
@@ -146,22 +237,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       backgroundColor: kPrimaryDark,
       appBar: AppBar(
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: GestureDetector(
-              onTap: () {
-                try {
-                  context.read<QuotesBloc>().add(LoadQuotes());
-                } catch (e) {
-                  displaySnackBar('$e');
-                }
-              },
-              child: const Icon(
-                CupertinoIcons.refresh_circled,
-                color: kSecondaryDark,
-                size: 50,
-              ),
-            ),
+          BlocBuilder<CategoryCubit, String>(
+            builder: (context, category) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: GestureDetector(
+                  onTap: () {
+                    try {
+                      context
+                          .read<QuotesBloc>()
+                          .add(LoadQuotes(category: category));
+                    } catch (e) {
+                      displaySnackBar('$e');
+                    }
+                  },
+                  child: const Icon(
+                    CupertinoIcons.refresh_circled,
+                    color: kSecondaryDark,
+                    size: 50,
+                  ),
+                ),
+              );
+            },
           ),
         ],
         backgroundColor: kPrimaryLighterDark,
