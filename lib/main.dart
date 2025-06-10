@@ -1,13 +1,16 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/data/data_provider/data_provider.dart';
 import 'package:quoter/data/repository/hive_quote.dart';
 import 'package:quoter/data/repository/quotes_repository.dart';
+import 'package:quoter/firebase_options.dart';
 import 'package:quoter/presentation/pages/favorites_page.dart';
 import 'package:quoter/presentation/pages/homepage.dart';
 
@@ -15,6 +18,9 @@ import 'bloc/cubit/share_image_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await LikedQuotesRepository.init();
   try {
     await dotenv.load();
@@ -48,8 +54,9 @@ class MyApp extends StatelessWidget {
         providers: [
           BlocProvider(
               create: (context) => QuotesBloc(context.read<QuotesRepository>())
-                ..add(LoadQuotes())),
+                ..add(LoadQuotes(category: ''))),
           BlocProvider(create: (context) => SwiperCubit()),
+          BlocProvider(create: (context) => CategoryCubit()),
           BlocProvider(create: (context) => ShareImageCubit()),
           BlocProvider(
             create: (context) => LikedQuotesBloc(LikedQuotesRepository())

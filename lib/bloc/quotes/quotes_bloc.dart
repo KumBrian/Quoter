@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quoter/data/repository/quotes_repository.dart';
 import 'package:quoter/models/quote.dart';
@@ -18,8 +19,10 @@ class QuotesBloc extends Bloc<QuotesEvent, QuotesState> {
     Emitter<QuotesState> emit,
   ) async {
     emit(QuotesLoading());
+
+    debugPrint(event.category);
     try {
-      final quotes = await quotesRepository.fetchQuotes();
+      final quotes = await quotesRepository.fetchQuotes(event.category);
       emit(QuotesLoaded(allQuotes: quotes));
     } catch (e) {
       emit(QuotesError(message: e.toString()));

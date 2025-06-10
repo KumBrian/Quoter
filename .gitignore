@@ -45,3 +45,4 @@ app.*.map.json
 
 .env
 .env.test
+/android/app/google-services.json
