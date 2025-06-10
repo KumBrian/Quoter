@@ -5,4 +5,8 @@ abstract class QuotesEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadQuotes extends QuotesEvent {}
+class LoadQuotes extends QuotesEvent {
+  final String category;
+
+  LoadQuotes({required this.category});
+}

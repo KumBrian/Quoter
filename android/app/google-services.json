@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17988577620",
+    "project_id": "quoter-6118a",
+    "storage_bucket": "quoter-6118a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17988577620:android:3fc45b628d093df682c0c1",
+        "android_client_info": {
+          "package_name": "com.kumbrian.quoter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5M_U-Pegov_BOZ7ZSXT1e1C7prAH6Hk0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
