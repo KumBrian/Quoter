@@ -18,7 +18,7 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return ElevatedButton.icon(
       onPressed: onPressed,
       style: ButtonStyle(
         padding: WidgetStateProperty.all<EdgeInsets>(
@@ -29,20 +29,14 @@ class CustomButton extends StatelessWidget {
         backgroundColor: WidgetStateProperty.all<Color>(kSecondaryDark),
         foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
       ),
-      child: Row(
-        spacing: 10,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label.toTitleCase,
-            style: GoogleFonts.getFont(
-              'Montserrat',
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          HugeIcon(icon: icon, color: Colors.white)
-        ],
+      icon: HugeIcon(icon: icon, color: Colors.white),
+      label: Text(
+        label.toTitleCase,
+        style: GoogleFonts.getFont(
+          'Montserrat',
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }
