@@ -15,7 +15,7 @@ class SingleQuoteCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext contextMain) {
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       color: kPrimaryDark,

@@ -19,81 +19,83 @@ class CategoriesDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: BlocBuilder<CategoryCubit, String>(
         builder: (context, category) {
+          // --- CHANGE: Get the CategoryCubit instance once here
+          final categoryCubit = context.read<CategoryCubit>();
+          final allCategories =
+              categoryCubit.categories; // Access categories directly
+
           return DropdownMenu(
-              initialSelection: category,
-              trailingIcon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedArrowDown01,
-                  color: kSecondaryDark),
-              selectedTrailingIcon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedArrowUp01,
-                  color: kSecondaryDark),
-              textStyle: GoogleFonts.getFont('Montserrat',
-                  fontSize: 20, color: Colors.white),
-              width: 250,
-              inputDecorationTheme: InputDecorationTheme(
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                    color: kSecondaryDark,
-                    width: 1,
-                  ),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                    color: kSecondaryDark,
-                    width: 1,
-                  ),
+            initialSelection: category,
+            trailingIcon: HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowDown01,
+                color: kSecondaryDark),
+            selectedTrailingIcon: HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowUp01, color: kSecondaryDark),
+            textStyle: GoogleFonts.getFont('Montserrat',
+                fontSize: 20, color: Colors.white),
+            width: 250,
+            inputDecorationTheme: InputDecorationTheme(
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color: kSecondaryDark,
+                  width: 1,
                 ),
               ),
-              menuStyle: MenuStyle(
-                backgroundColor: WidgetStateProperty.all(kPrimaryLighterDark),
-                elevation: WidgetStateProperty.all(1),
-                minimumSize: WidgetStateProperty.all(
-                  Size(238, 200),
-                ),
-                maximumSize: WidgetStateProperty.all(
-                  Size(238, 500),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color: kSecondaryDark,
+                  width: 1,
                 ),
               ),
-              label: Text(
-                'Select category',
-                style: GoogleFonts.getFont('Montserrat',
-                    fontSize: 20, color: kSecondaryDark),
+            ),
+            menuStyle: MenuStyle(
+              backgroundColor: WidgetStateProperty.all(kPrimaryLighterDark),
+              elevation: WidgetStateProperty.all(1),
+              minimumSize: WidgetStateProperty.all(
+                const Size(238, 200), // Use const Size
               ),
-              onSelected: (value) {
-                if (value == 'Surprise Me') {
-                  context.read<CategoryCubit>().clearCategory();
-                  context.read<QuotesBloc>().add(LoadQuotes(category: ''));
-                } else {
-                  context
-                      .read<CategoryCubit>()
-                      .updateCategory(value!.toTitleCase);
-                  context.pop();
-                  context.read<QuotesBloc>().add(LoadQuotes(
-                      category: context.read<CategoryCubit>().state));
-                }
-              },
-              dropdownMenuEntries: List.generate(
-                  context.read<CategoryCubit>().categories.length, (index) {
-                return DropdownMenuEntry(
-                  value: context
-                      .read<CategoryCubit>()
-                      .categories[index]
-                      .toTitleCase,
-                  label: context
-                      .read<CategoryCubit>()
-                      .categories[index]
-                      .toTitleCase,
-                  style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all(kPrimaryLighterDark),
-                    foregroundColor: WidgetStateProperty.all(Colors.white),
-                    textStyle: WidgetStateProperty.all(
-                        GoogleFonts.getFont('Montserrat', fontSize: 20)),
-                  ),
-                );
-              }));
+              maximumSize: WidgetStateProperty.all(
+                const Size(238, 500), // Use const Size
+              ),
+            ),
+            label: Text(
+              'Select category',
+              style: GoogleFonts.getFont('Montserrat',
+                  fontSize: 20, color: kSecondaryDark),
+            ),
+            onSelected: (String? value) {
+              // --- CHANGE: Make value nullable as per DropdownMenu signature
+              if (value == null) return; // Handle null case defensively
+
+              if (value == 'Surprise Me') {
+                categoryCubit
+                    .clearCategory(); // --- CHANGE: Use the local cubit instance
+                context.read<QuotesBloc>().add(LoadQuotes(category: ''));
+              } else {
+                categoryCubit.updateCategory(value
+                    .toTitleCase); // --- CHANGE: Use the local cubit instance
+                context.pop();
+                context.read<QuotesBloc>().add(LoadQuotes(
+                    category: categoryCubit
+                        .state)); // --- CHANGE: Use the local cubit instance
+              }
+            },
+            // --- CHANGE: Use the 'allCategories' list directly
+            dropdownMenuEntries: allCategories.map((categoryItem) {
+              return DropdownMenuEntry(
+                value: categoryItem.toTitleCase,
+                label: categoryItem.toTitleCase,
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.all(kPrimaryLighterDark),
+                  foregroundColor: WidgetStateProperty.all(Colors.white),
+                  textStyle: WidgetStateProperty.all(
+                      GoogleFonts.getFont('Montserrat', fontSize: 20)),
+                ),
+              );
+            }).toList(), // Convert iterable to List
+          );
         },
       ),
     );

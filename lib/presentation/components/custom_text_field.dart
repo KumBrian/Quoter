@@ -26,7 +26,7 @@ class CustomTextField extends StatelessWidget {
       ),
       cursorColor: kSecondaryDark,
       decoration: InputDecoration(
-        hintText: 'Describe category',
+        hintText: 'Describe Mood',
         hintStyle: GoogleFonts.getFont(
           'Montserrat',
           fontSize: 18,

@@ -4,14 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/constants.dart';
-import 'package:quoter/models/quote.dart';
+import 'package:quoter/presentation/components/loading_rings.dart';
 import 'package:quoter/presentation/pages/quote_card.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
   @override
-  Widget build(BuildContext contextMain) {
+  Widget build(BuildContext context) {
+    // CHANGE: Renamed contextMain to context
     return Scaffold(
       backgroundColor: kPrimaryDark,
       appBar: AppBar(
@@ -30,7 +31,8 @@ class FavoritesPage extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: GestureDetector(
-            onTap: () => contextMain.pop(contextMain),
+            // CHANGE: Simplified context.pop() call. No need to pass context again.
+            onTap: () => context.pop(),
             child: const Icon(
               Icons.home_filled,
               color: kSecondaryDark,
@@ -42,7 +44,7 @@ class FavoritesPage extends StatelessWidget {
       body: BlocBuilder<LikedQuotesBloc, LikedQuotesState>(
         builder: (context, state) {
           if (state is LikedQuotesLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: LoadingRings(size: 100));
           }
 
           if (state is LikedQuotesLoaded) {
@@ -66,11 +68,15 @@ class FavoritesPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 12.0),
                   child: Hero(
+                    // NO CHANGE: Hero tag is fine as is
                     tag: 'quote by ${thisQuote.author}',
                     child: Dismissible(
-                      key: ValueKey<Quote>(thisQuote),
+                      // CHANGE: Using ObjectKey for Dismissible key, as ValueKey might cause issues
+                      // if a quote's content is identical to another (though unlikely here, it's safer).
+                      key: ObjectKey(thisQuote),
                       direction: DismissDirection.endToStart,
                       onDismissed: (_) {
+                        // NO CHANGE: Bloc event dispatch remains the same
                         context
                             .read<LikedQuotesBloc>()
                             .add(RemoveFavorite(thisQuote, context));
@@ -90,27 +96,40 @@ class FavoritesPage extends StatelessWidget {
                         ),
                       ),
                       child: Material(
+                        // ADDED: Material widget to provide ink effects and elevation
                         borderRadius: BorderRadius.circular(20),
                         color: kPrimaryLighterDark,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 24.0),
-                          title: Text(
-                            thisQuote.author.toUpperCase(),
-                            style: GoogleFonts.getFont(
-                              'Montserrat',
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: kSecondaryDark,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        child: InkWell(
+                          // CHANGE: Using InkWell for tap detection to get ripple effect
+                          borderRadius: BorderRadius.circular(
+                              20), // Match Material's border radius
                           onTap: () {
                             showDialog(
                               context: context,
                               builder: (_) => QuoteCard(quote: thisQuote),
                             );
                           },
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 24.0),
+                            title: Text(
+                              thisQuote.author.toUpperCase(),
+                              style: GoogleFonts.getFont(
+                                'Montserrat',
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: kSecondaryDark,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // REMOVED: onTap from ListTile as InkWell handles it
+                            // onTap: () {
+                            //   showDialog(
+                            //     context: context,
+                            //     builder: (_) => QuoteCard(quote: thisQuote),
+                            //   );
+                            // },
+                          ),
                         ),
                       ),
                     ),
@@ -120,7 +139,7 @@ class FavoritesPage extends StatelessWidget {
             );
           }
 
-          // If for some reason you get an unexpected state:
+          // NO CHANGE: Default return for unexpected states
           return const SizedBox.shrink();
         },
       ),

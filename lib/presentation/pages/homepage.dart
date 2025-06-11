@@ -8,11 +8,9 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
-import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/data/repository/category_repository.dart';
-import 'package:quoter/models/quote.dart';
 import 'package:quoter/presentation/components/bottom_controls.dart';
 import 'package:quoter/presentation/components/categories_dropdown.dart';
 import 'package:quoter/presentation/components/custom_button.dart';
@@ -31,25 +29,42 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  final SwiperController swiperController = SwiperController();
-  final TextEditingController categoryDescriptionController =
+// --- CHANGE: Removed TickerProviderStateMixin as it's not currently used (no AnimationController)
+class _HomePageState extends State<HomePage> {
+  final SwiperController _swiperController =
+      SwiperController(); // CHANGE: Made private
+  final TextEditingController
+      _categoryDescriptionController = // CHANGE: Made private
       TextEditingController();
-  int? _lastLikedIndex;
+  // --- REMOVED: _lastLikedIndex logic will be handled directly in LikedQuotesBloc listener in main
+  // int? _lastLikedIndex;
 
   @override
   void initState() {
     super.initState();
+    // No specific initialization needed here, as Blocs handle data loading.
+    // Ensure initial quotes are loaded in main.dart or a parent Bloc.
   }
 
-  void displaySnackBar(String text) {
+  // --- ADDED: Dispose controllers to prevent memory leaks
+  @override
+  void dispose() {
+    _swiperController.dispose();
+    _categoryDescriptionController.dispose();
+    super.dispose();
+  }
+
+  // --- REFACTOR: Extracted SnackBar display logic into a private method
+  void _displaySnackBar(BuildContext context, String text,
+      {Color? backgroundColor, Color? textColor}) {
     showTopSnackBar(
       Overlay.of(context),
       CustomSnackBar.info(
-        backgroundColor: kSecondaryDark.withValues(alpha: 0.9),
+        backgroundColor: backgroundColor ??
+            kSecondaryDark.withAlpha(200), // Default to kSecondaryDark
         textStyle: GoogleFonts.getFont(
           'Montserrat',
-          color: kPrimaryDark,
+          color: textColor ?? kPrimaryDark, // Default to kPrimaryDark
           fontSize: 20,
           fontWeight: FontWeight.w400,
         ),
@@ -67,9 +82,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         child: Drawer(
           width: 300,
           backgroundColor: kPrimaryDark,
+          // --- CHANGE: Added a Column for direct children with fixed spacing where appropriate
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 30,
+            // spacing: 30, // Removed, use SizedBox for explicit spacing
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -83,15 +99,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              const SizedBox(height: 70),
+              const SizedBox(height: 70), // Explicit spacing
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: GestureDetector(
                   onTap: () {
-                    context.pop();
-                    context.go('/home/favourites');
+                    context.pop(); // Close drawer
+                    context.go('/home/favourites'); // Navigate to favorites
                   },
                   child: Row(
+                    // Using Row for consistent layout with other drawer items
                     children: [
                       Text(
                         'FAVOURITES',
@@ -105,126 +122,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              CategoriesDropdown(),
+              const SizedBox(
+                  height: 30), // Explicit spacing for CategoriesDropdown
+              const CategoriesDropdown(), // CHANGE: Made const as it's stateless
+              const SizedBox(height: 30), // Explicit spacing
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: GestureDetector(
                   onTap: () {
-                    context.pop();
-                    showModalBottomSheet(
-                        context: context,
-                        elevation: 0,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        sheetAnimationStyle:
-                            AnimationStyle(curve: Curves.decelerate),
-                        barrierColor: Colors.transparent,
-                        builder: (context) {
-                          return Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 40, vertical: 40),
-                              height: 700,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: kPrimaryLighterDark,
-                              ),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  spacing: 20,
-                                  children: [
-                                    CustomTextField(
-                                        categoryDescriptionController:
-                                            categoryDescriptionController),
-                                    CustomButton(
-                                      label: 'get suggestions',
-                                      onPressed: () async {
-                                        try {
-                                          context
-                                              .read<CategorySuggestionCubit>()
-                                              .setLoading();
-                                          context
-                                              .read<CategorySuggestionCubit>()
-                                              .updateSuggestion(
-                                                  await CategoryRepository()
-                                                      .fetchCategory(
-                                                          categoryDescriptionController
-                                                              .text
-                                                              .toTitleCase));
-                                        } catch (e) {
-                                          displaySnackBar('$e');
-                                        }
-                                      },
-                                      icon: HugeIcons
-                                          .strokeRoundedArtificialIntelligence08,
-                                    ),
-                                    BlocBuilder<CategorySuggestionCubit,
-                                        CategorySuggestionState>(
-                                      builder: (context, categoryState) {
-                                        if (categoryState
-                                            is CategorySuggestionLoading) {
-                                          return const LoadingRings(
-                                            size: 50,
-                                          );
-                                        }
-
-                                        if (categoryState
-                                            is CategorySuggestionError) {
-                                          return FailureWidget(size: size);
-                                        }
-                                        if (categoryState
-                                            is CategorySuggestionLoaded) {
-                                          return InkWell(
-                                            onTap: () {
-                                              context
-                                                  .read<CategoryCubit>()
-                                                  .updateCategory(categoryState
-                                                      .suggestion.toTitleCase);
-                                              context
-                                                  .read<
-                                                      CategorySuggestionCubit>()
-                                                  .clearSuggestion();
-                                              categoryDescriptionController
-                                                  .clear();
-                                              context.pop();
-                                              context.read<QuotesBloc>().add(
-                                                  LoadQuotes(
-                                                      category: context
-                                                          .read<CategoryCubit>()
-                                                          .state));
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  color: kPrimaryDark,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          15)),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20.0,
-                                                      vertical: 30),
-                                              child: Text(
-                                                categoryState
-                                                    .suggestion.toTitleCase,
-                                                style: GoogleFonts.getFont(
-                                                    'Montserrat',
-                                                    fontSize: 20,
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                        return SizedBox.shrink();
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ));
-                        });
+                    context.pop(); // Close drawer
+                    _showCategorySuggestionSheet(
+                        context); // REFACTOR: Extracted modal sheet logic
                   },
                   child: Row(
+                    // Using Row for consistent layout with other drawer items
                     children: [
                       Text(
                         'Describe category',
@@ -238,6 +149,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              const SizedBox(height: 30), // Explicit spacing
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Row(
@@ -265,8 +177,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           const SizedBox(width: 35),
                           Expanded(
                             child: Switch(
-                              value: false,
-                              onChanged: (value) {},
+                              value:
+                                  false, // You'll link this to a ThemeCubit/Provider later
+                              onChanged: (value) {
+                                // TODO: Implement theme switching logic here (e.g., via a ThemeCubit)
+                              },
                             ),
                           ),
                           const SizedBox(width: 20),
@@ -296,13 +211,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.only(right: 16.0),
                 child: GestureDetector(
                   onTap: () {
-                    try {
-                      context
-                          .read<QuotesBloc>()
-                          .add(LoadQuotes(category: category));
-                    } catch (e) {
-                      displaySnackBar('$e');
-                    }
+                    // --- REFACTOR: Use the private snackbar method
+                    context
+                        .read<QuotesBloc>()
+                        .add(LoadQuotes(category: category));
+                    _displaySnackBar(context, 'Loading new quotes...',
+                        backgroundColor: kSecondaryDark.withAlpha(200),
+                        textColor: kPrimaryDark);
                   },
                   child: const Icon(
                     CupertinoIcons.refresh_circled,
@@ -341,102 +256,90 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }),
       ),
 
-      // ─── IMPORTANT: Provide a single SwiperCubit here (so QuoteSwiper and BottomControls share it)
+      // ─── IMPORTANT: Provide SwiperCubit here for QuoteSwiper and BottomControls ───
       body: BlocProvider(
         create: (_) => SwiperCubit(),
         child: BlocConsumer<QuotesBloc, QuotesState>(
+          // --- CHANGE: Simplified buildWhen for initial load/error state for the main content
           buildWhen: (previous, current) {
-            // Only rebuild on the *initial* success/failure/loading. If we toggle "like"
-            // (which emits another QuotesSuccess), we do NOT rebuild the Swiper.
-            if (current is QuotesLoading && previous is! QuotesLoading) {
-              return true;
-            }
-            if (current is QuotesError && previous is! QuotesError) {
-              return true;
-            }
-            if (current is QuotesLoaded && previous is! QuotesLoaded) {
-              return true;
-            }
-            return false;
+            return current is QuotesLoading ||
+                current is QuotesError ||
+                current is QuotesLoaded ||
+                current is QuotesInitial;
           },
           listener: (context, state) {
             if (state is QuotesError) {
-              displaySnackBar(state.message);
+              _displaySnackBar(context, state.message,
+                  backgroundColor: Colors.red.withAlpha(200),
+                  textColor: Colors.white);
             }
             if (state is QuotesLoaded) {
-              // ✅ Reset swiper index to 0 on refresh
-              context.read<SwiperCubit>().updateIndex(0);
-
-              // Handle like notification if needed
-              if (_lastLikedIndex != null) {
-                final toggledQuote = state.allQuotes[_lastLikedIndex!];
-                final isNowLiked = toggledQuote.isLiked;
-
-                showTopSnackBar(
-                  Overlay.of(context),
-                  CustomSnackBar.info(
-                    backgroundColor: isNowLiked
-                        ? kSecondaryDark.withAlpha(200)
-                        : kPrimaryDark.withAlpha(200),
-                    textStyle: GoogleFonts.getFont(
-                      'Montserrat',
-                      color: isNowLiked ? kPrimaryDark : Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w100,
-                    ),
-                    message: isNowLiked
-                        ? 'You Liked a Quote By ${toggledQuote.author}'
-                        : 'You Disliked the Quote By ${toggledQuote.author}',
-                  ),
-                );
-
-                _lastLikedIndex = null;
+              // Reset swiper index to 0 on refresh.
+              // --- CHANGE: Only reset if not already at 0, or if quotes actually changed.
+              // This is a subtle optimization to avoid unnecessary state updates.
+              if (context.read<SwiperCubit>().state != 0) {
+                context.read<SwiperCubit>().updateIndex(0);
+                _swiperController.move(0); // Also move the physical swiper
               }
+
+              // --- REMOVED: _lastLikedIndex notification logic.
+              // This logic is better handled in the LikedQuotesBloc's listener itself
+              // or within the CustomIconButton's onTap where the like/dislike action occurs.
+              // Doing it here based on `QuotesLoaded` state is indirectly tied to the core
+              // quotes data, not directly to the liked status change.
+              // To notify on like/dislike, the LikedQuotesBloc should emit a state
+              // that a listener can react to, or the action itself triggers a snackbar.
             }
           },
           builder: (context, quoteState) {
-            if (quoteState is QuotesLoading) {
-              return const LoadingRings(
-                size: 100,
+            if (quoteState is QuotesLoading || quoteState is QuotesInitial) {
+              return const Center(
+                child: LoadingRings(
+                  size: 100,
+                ),
               );
             }
             if (quoteState is QuotesError) {
-              return FailureWidget(size: size);
-            }
-            if (quoteState is QuotesInitial) {
-              return const LoadingRings(
-                size: 100,
+              return Center(
+                child: FailureWidget(size: size),
               );
             }
+
+            // At this point, quoteState MUST be QuotesLoaded
             final allQuotes = (quoteState as QuotesLoaded).allQuotes;
+
+            if (allQuotes.isEmpty) {
+              return Center(
+                child: Text(
+                  'No quotes found for this category.',
+                  style: GoogleFonts.getFont('Montserrat',
+                      color: Colors.white, fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
 
             return Column(
               children: [
-                // ─── Top: QuoteSwiper (only built once on initial success) ───
+                // ─── Top: QuoteSwiper ───
                 Expanded(
                   flex: 8,
                   child: QuoteSwiper(
                     allQuotes: allQuotes,
-                    swiperController: swiperController,
+                    swiperController:
+                        _swiperController, // CHANGE: Use the private controller
                   ),
                 ),
 
-                // ─── Bottom: BottomControls (reads live index + live quotes) ───
+                // ─── Bottom: BottomControls ───
                 Expanded(
                   flex: 2,
-                  child: BlocBuilder<LikedQuotesBloc, LikedQuotesState>(
-                    builder: (context, likedState) {
-                      final favoriteSet = <Quote>{};
-                      if (likedState is LikedQuotesLoaded) {
-                        favoriteSet.addAll(likedState.likedQuotes);
-                      }
-                      final currentQuote = allQuotes[swiperController.index];
-                      final isLiked = favoriteSet
-                          .contains(allQuotes[swiperController.index]);
-                      return BottomControls(
-                        swiperController: swiperController,
-                      );
-                    },
+                  // --- REMOVED: Redundant BlocBuilder<LikedQuotesBloc, LikedQuotesState>
+                  // BottomControls itself already contains the BlocBuilder for liked status,
+                  // so no need to wrap it here.
+                  child: BottomControls(
+                    swiperController:
+                        _swiperController, // CHANGE: Use the private controller
                   ),
                 ),
               ],
@@ -444,6 +347,118 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
         ),
       ),
+    );
+  }
+
+  // --- NEW METHOD: Extracted the logic for showing the category suggestion modal bottom sheet
+  void _showCategorySuggestionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      elevation: 0,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      // CHANGE: AnimationStyle for better control, though default might be fine
+      // sheetAnimationStyle: AnimationStyle(curve: Curves.decelerate),
+      barrierColor: Colors.transparent,
+      builder: (ctx) {
+        // CHANGE: Renamed builder context to ctx to avoid conflict
+        return Container(
+            padding: const EdgeInsets.symmetric(
+                // CHANGE: Added const
+                horizontal: 40,
+                vertical: 40),
+            height: 700,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: kPrimaryLighterDark,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                // --- CHANGE: Use explicit SizedBox for spacing in Column
+                // spacing: 20, // Removed
+                children: [
+                  CustomTextField(
+                      categoryDescriptionController:
+                          _categoryDescriptionController), // CHANGE: Use private controller
+                  const SizedBox(height: 20), // Explicit spacing
+                  CustomButton(
+                    label: 'get suggestions',
+                    onPressed: () async {
+                      try {
+                        ctx
+                            .read<CategorySuggestionCubit>()
+                            .setLoading(); // Use ctx
+                        final String suggestion = await CategoryRepository()
+                            .fetchCategory(_categoryDescriptionController
+                                .text.toTitleCase); // Use private controller
+                        ctx
+                            .read<CategorySuggestionCubit>()
+                            .updateSuggestion(suggestion); // Use ctx
+                      } catch (e) {
+                        _displaySnackBar(ctx, '$e',
+                            backgroundColor: Colors.red.withAlpha(200),
+                            textColor: Colors.white); // Use ctx
+                      }
+                    },
+                    icon: HugeIcons.strokeRoundedArtificialIntelligence08,
+                  ),
+                  const SizedBox(height: 20), // Explicit spacing
+                  BlocBuilder<CategorySuggestionCubit, CategorySuggestionState>(
+                    builder: (blocContext, categoryState) {
+                      // CHANGE: Renamed context to blocContext
+                      if (categoryState is CategorySuggestionLoading) {
+                        return const LoadingRings(
+                          size: 50,
+                        );
+                      }
+
+                      if (categoryState is CategorySuggestionError) {
+                        return FailureWidget(size: Size(100, 100));
+                      }
+                      if (categoryState is CategorySuggestionLoaded) {
+                        return InkWell(
+                          onTap: () {
+                            blocContext // Use blocContext
+                                .read<CategoryCubit>()
+                                .updateCategory(
+                                    categoryState.suggestion.toTitleCase);
+                            blocContext // Use blocContext
+                                .read<CategorySuggestionCubit>()
+                                .clearSuggestion();
+                            _categoryDescriptionController
+                                .clear(); // Use private controller
+                            blocContext.pop(); // Use blocContext
+                            blocContext
+                                .read<QuotesBloc>()
+                                .add(// Use blocContext
+                                    LoadQuotes(
+                                        category: blocContext // Use blocContext
+                                            .read<CategoryCubit>()
+                                            .state));
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: kPrimaryDark,
+                                borderRadius: BorderRadius.circular(15)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0, vertical: 30),
+                            child: Text(
+                              categoryState.suggestion.toTitleCase,
+                              style: GoogleFonts.getFont('Montserrat',
+                                  fontSize: 20, color: Colors.white),
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink(); // CHANGE: Added const
+                    },
+                  ),
+                ],
+              ),
+            ));
+      },
     );
   }
 }
