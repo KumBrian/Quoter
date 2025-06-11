@@ -8,9 +8,11 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
+import 'package:quoter/bloc/cubit/user_cubit.dart';
 import 'package:quoter/bloc/quotes/quotes_bloc.dart';
 import 'package:quoter/constants.dart';
 import 'package:quoter/data/repository/category_repository.dart';
+import 'package:quoter/models/user_model.dart';
 import 'package:quoter/presentation/components/bottom_controls.dart';
 import 'package:quoter/presentation/components/categories_dropdown.dart';
 import 'package:quoter/presentation/components/custom_button.dart';
@@ -97,6 +99,27 @@ class _HomePageState extends State<HomePage> {
                     size: 50,
                     color: kSecondaryDark,
                   ),
+                ),
+              ),
+              const SizedBox(height: 70), // Explicit spacing
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: BlocBuilder<UserCubit, UserModel?>(
+                  builder: (context, userModel) {
+                    return Row(
+                      // Using Row for consistent layout with other drawer items
+                      children: [
+                        Text(
+                          'Hi ${userModel?.username.toUpperCase() ?? 'User'}',
+                          style: GoogleFonts.getFont(
+                            'Montserrat',
+                            fontSize: 24,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 70), // Explicit spacing
