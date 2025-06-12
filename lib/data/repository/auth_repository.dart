@@ -11,7 +11,6 @@ class AuthRepository {
     required FirestoreService firestoreService,
   })  : _firebaseAuth = firebaseAuth,
         _firestoreService = firestoreService;
-
   // Stream to listen to Firebase Auth state changes and map to UserModel
   Stream<UserModel?> get user {
     return _firebaseAuth.authStateChanges().asyncMap((firebaseUser) async {

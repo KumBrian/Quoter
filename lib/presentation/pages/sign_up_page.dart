@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:quoter/bloc/auth/auth_bloc.dart';
+import 'package:quoter/bloc/cubit/show_password_cubit.dart';
 import 'package:quoter/constants.dart';
+import 'package:quoter/presentation/components/auth_text_field.dart';
+import 'package:quoter/presentation/components/custom_button.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 
 class SignUp extends StatefulWidget {
@@ -21,6 +25,21 @@ class _SignUpState extends State<SignUp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kPrimaryLighterDark,
+      appBar: AppBar(
+        backgroundColor: kPrimaryLighterDark,
+        centerTitle: true,
+        toolbarHeight: 100,
+        elevation: 0,
+        title: Text(
+          'QUOTER',
+          style: GoogleFonts.getFont(
+            'Montserrat',
+            fontSize: 40,
+            color: kSecondaryDark,
+          ),
+        ),
+      ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -43,40 +62,45 @@ class _SignUpState extends State<SignUp> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextField(
+              Text(
+                'Welcome To Quoter',
+                style: GoogleFonts.getFont('Moon Dance',
+                    fontSize: 40, color: Colors.white),
+              ),
+              AuthTextField(
                 controller: _emailController,
-                onTapOutside: (event) {
-                  FocusScope.of(context).unfocus();
-                },
-                decoration: const InputDecoration(
-                  label: Text('Email'),
-                  hint: Text('Email'),
-                  border: OutlineInputBorder(),
-                ),
+                obscureText: false,
+                hintText: 'Email',
+                labelText: 'Email',
+                suffixIcon: HugeIcons.strokeRoundedMail01,
               ),
-              TextField(
+              AuthTextField(
                 controller: _usernameController,
-                onTapOutside: (event) {
-                  FocusScope.of(context).unfocus();
-                },
-                decoration: const InputDecoration(
-                  label: Text('Username'),
-                  hint: Text('Username'),
-                  border: OutlineInputBorder(),
-                ),
+                obscureText: false,
+                hintText: 'Username',
+                labelText: 'Username',
+                suffixIcon: HugeIcons.strokeRoundedUser,
               ),
-              TextField(
-                controller: _passwordController,
-                onTapOutside: (event) {
-                  FocusScope.of(context).unfocus();
+              BlocBuilder<ShowPasswordCubit, bool>(
+                builder: (context, showPassword) {
+                  return AuthTextField(
+                    controller: _passwordController,
+                    obscureText: showPassword,
+                    hintText: 'Password',
+                    labelText: 'Password',
+                    suffixIcon: showPassword
+                        ? HugeIcons.strokeRoundedEye
+                        : HugeIcons.strokeRoundedViewOffSlash,
+                    onIconTap: () {
+                      context
+                          .read<ShowPasswordCubit>()
+                          .togglePasswordVisibility();
+                    },
+                  );
                 },
-                decoration: InputDecoration(
-                  label: Text('Password'),
-                  hint: Text('Password'),
-                  border: OutlineInputBorder(),
-                ),
               ),
-              ElevatedButton(
+              CustomButton(
+                label: 'Sign Up',
                 onPressed: () {
                   context.read<AuthBloc>().add(
                         SignUpRequested(
@@ -86,34 +110,17 @@ class _SignUpState extends State<SignUp> {
                         ),
                       );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
-                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                ),
-                child: BlocListener<AuthBloc, AuthState>(
-                  listener: (context, state) {
-                    if (state is AuthError) {
-                      debugPrint(state.message);
-                    } else if (state is Authenticated) {
-                      context.go('/home');
-                    }
-                  },
-                  child: Text('Sign Up'),
-                ),
+                icon: HugeIcons.strokeRoundedAccess,
               ),
               TextButton(
                 onPressed: () {
                   context.go('/signin');
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => SignIn()),
-                  // );
                 },
-                child: Text('Already have an account?'),
+                child: Text(
+                  "Already have an account?",
+                  style: GoogleFonts.getFont('Montserrat',
+                      fontSize: 20, color: kSecondaryDark),
+                ),
               ),
             ],
           ),

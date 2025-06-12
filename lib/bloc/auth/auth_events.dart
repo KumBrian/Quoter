@@ -29,3 +29,12 @@ class LoginRequested extends AuthEvent {
 }
 
 class LogoutRequested extends AuthEvent {}
+
+class _AuthUserChanged extends AuthEvent {
+  final UserModel? userModel;
+
+  _AuthUserChanged(this.userModel);
+
+  @override
+  List<Object?> get props => [userModel];
+}

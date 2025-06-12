@@ -1,47 +1,41 @@
-// lib/bloc/auth/auth_bloc.dart (or wherever your AuthBloc file is located)
+// lib/bloc/auth/auth_bloc.dart
+library;
 
-library; // Keep this if your file is part of a library directive
+import 'dart:async';
 
-import 'dart:async'; // Keep if you use Futures or Streams directly in the Bloc
-
-import 'package:firebase_auth/firebase_auth.dart'; // Keep if you use FirebaseAuthException
-import 'package:flutter/cupertino.dart'; // Keep if you use Cupertino widgets/types (e.g., @immutable)
+import 'package:equatable/equatable.dart'; // Ensure Equatable is imported
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart'; // Keep if used for @immutable
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:quoter/data/repository/auth_repository.dart'; // NEW: Import AuthRepository
-import 'package:quoter/models/user_model.dart'; // NEW: Import UserModel
+import 'package:quoter/data/repository/auth_repository.dart';
+import 'package:quoter/models/user_model.dart';
 
 part 'auth_events.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  // CHANGE: AuthBloc now depends on AuthRepository, not direct Firebase instances
   final AuthRepository _authRepository;
-  late StreamSubscription<UserModel?>
-      _userSubscription; // NEW: To manage the stream subscription
+  late StreamSubscription<UserModel?> _userSubscription;
 
-  // CHANGE: Update constructor to take AuthRepository
   AuthBloc({required AuthRepository authRepository})
       : _authRepository = authRepository,
-        super(AuthInitial()) {
+        super(AuthLoading()) {
+    // CHANGE: Start with AuthLoading
     on<SignUpRequested>(_onSignUpRequested);
     on<LoginRequested>(_onLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
-    on<_AuthUserChanged>(
-        _onAuthUserChanged); // NEW: Handler for internal stream event
+    on<_AuthUserChanged>(_onAuthUserChanged);
 
-    // NEW: Listen to AuthRepository's user stream and dispatch internal events
     _userSubscription = _authRepository.user.listen((userModel) {
-      add(_AuthUserChanged(userModel)); // Dispatch internal event
+      add(_AuthUserChanged(userModel));
     });
   }
 
-  // NEW: Handler for when the authentication state changes via stream
   void _onAuthUserChanged(_AuthUserChanged event, Emitter<AuthState> emit) {
     if (event.userModel != null) {
-      emit(
-          Authenticated(event.userModel!)); // Emit Authenticated with UserModel
+      emit(Authenticated(event.userModel!));
     } else {
-      emit(Unauthenticated()); // Emit Unauthenticated
+      emit(Unauthenticated()); // CHANGE: Emit Unauthenticated when user is null
     }
   }
 
@@ -49,19 +43,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SignUpRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    // No explicit emit(AuthLoading()) here if you want it to be handled by stream
+    // and only show AuthLoading initially or during AuthChecker.
+    // If you want a loading state specific to the sign-up button, you can re-add emit(AuthLoading()).
     try {
-      // CHANGE: Call AuthRepository's signUp method
       await _authRepository.signUp(
         email: event.email,
         password: event.password,
         username: event.username,
       );
-      // State will be handled by the _authRepository.user stream listener
+      // DO NOT EMIT Authenticated here. The _userSubscription will handle it.
     } on FirebaseAuthException catch (e) {
       emit(AuthError(e.message ?? 'Sign up failed'));
+      emit(Unauthenticated()); // Go back to unauthenticated if sign up failed
     } catch (e) {
       emit(AuthError('An unexpected error occurred: ${e.toString()}'));
+      emit(Unauthenticated()); // Go back to unauthenticated if sign up failed
     }
   }
 
@@ -69,18 +66,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    // No explicit emit(AuthLoading()) here.
     try {
-      // CHANGE: Call AuthRepository's signIn method
       await _authRepository.signIn(
         email: event.email,
         password: event.password,
       );
-      // State will be handled by the _authRepository.user stream listener
+      // DO NOT EMIT Authenticated here. The _userSubscription will handle it.
     } on FirebaseAuthException catch (e) {
       emit(AuthError(e.message ?? 'Login failed'));
+      emit(Unauthenticated()); // Go back to unauthenticated if login failed
     } catch (e) {
       emit(AuthError('An unexpected error occurred: ${e.toString()}'));
+      emit(Unauthenticated()); // Go back to unauthenticated if login failed
     }
   }
 
@@ -88,30 +86,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthLoading());
+    // No explicit emit(AuthLoading()) here.
     try {
-      // CHANGE: Call AuthRepository's signOut method
       await _authRepository.signOut();
-      // State will be handled by the _authRepository.user stream listener
+      // REMOVE: DO NOT EMIT Unauthenticated here. The _userSubscription will handle it.
     } catch (e) {
       emit(AuthError('Logout failed: ${e.toString()}'));
+      // If logout fails, the stream won't emit null, so the state will remain
+      // whatever it was (likely Authenticated), which is correct.
     }
   }
 
   @override
   Future<void> close() {
-    _userSubscription.cancel(); // NEW: Cancel the stream subscription on close
+    _userSubscription.cancel();
     return super.close();
   }
-}
-
-// --- NEW INTERNAL EVENT ---
-// This event is dispatched internally when the auth state changes via the stream
-@immutable // Good practice for Bloc events
-class _AuthUserChanged extends AuthEvent {
-  final UserModel? userModel;
-  _AuthUserChanged(this.userModel);
-
-  @override
-  List<Object?> get props => [userModel]; // For equality checks in BlocTest
 }

@@ -5,6 +5,7 @@ import 'package:quoter/bloc/auth/auth_bloc.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/share_image_cubit.dart'; // Don't forget this new cubit!
+import 'package:quoter/bloc/cubit/show_password_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
 import 'package:quoter/bloc/cubit/user_cubit.dart';
 import 'package:quoter/bloc/liked_quotes/liked_quotes_bloc.dart';
@@ -47,6 +48,7 @@ Future<void> initDependencies() async {
   // --- Cubits & Blocs ---
   sl.registerFactory<AuthBloc>(() => AuthBloc(authRepository: sl()));
   sl.registerFactory<UserCubit>(() => UserCubit(firestoreService: sl()));
+  sl.registerFactory<ShowPasswordCubit>(() => ShowPasswordCubit());
   sl.registerFactory<QuotesBloc>(() => QuotesBloc(sl()));
   sl.registerFactory<LikedQuotesBloc>(() => LikedQuotesBloc(sl()));
   sl.registerFactory<CategoryCubit>(() => CategoryCubit());

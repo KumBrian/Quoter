@@ -30,10 +30,10 @@ class QuotesDataProvider {
 
       if (category == '') {
         promptText =
-            'You are an API for a quotes app called Quoter. Your task is to provide a JSON structured response containing 10 *distinct* and *fresh* quotes. Each quote must have a "quote", "author", and "category". Ensure each quote is no longer than 200 words. Strive to generate *unique* and *less commonly known* quotes across a *wide range of diverse and interesting categories* with every request. The quotes should be reasonable and inspiring, but always new.';
+            'You are an API for a quotes app called Quoter. Your task is to provide a JSON structured response containing 10 *distinct* and *fresh* quotes. Each quote must have a "quote", "author", and "category". Ensure that the author, quote and category have no unusual characters in them like <,>,{,},[,],@, ~ and many others. That can break the UI. Make sure it it pure strings. Strive to generate *unique* and *less commonly known* quotes across a *wide range of diverse and interesting categories* with every request. The quotes should be reasonable and inspiring, but always new.';
       } else {
         promptText =
-            'You are an API for a quotes app called Quoter. Your task is to provide a JSON structured response with 10 *distinct* and *fresh* quotes. Each quote must have a "quote", "author", and a "category" matching the requested category: **$category**. Ensure each quote is no longer than 200 words. Generate unique and less commonly known quotes that fit the **$category** category. The quotes should be reasonable and inspiring.';
+            'You are an API for a quotes app called Quoter. Your task is to provide a JSON structured response with 10 *distinct* and *fresh* quotes. Each quote must have a "quote", "author", and a "category" matching the requested category: **$category**. Ensure that the author, quote and category have no unusual characters in them like <,>,{,},[,],@, ~ and many others. That can break the UI. Make sure it it pure strings. Generate unique and less commonly known quotes that fit the **$category** category. The quotes should be reasonable and inspiring.';
       }
 
       final prompt = [Content.text(promptText)];

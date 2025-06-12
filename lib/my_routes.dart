@@ -1,74 +1,77 @@
-part of "main.dart";
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quoter/bloc/auth/auth_bloc.dart';
+import 'package:quoter/core/helpers.dart';
+import 'package:quoter/presentation/pages/auth_checker_page.dart';
+import 'package:quoter/presentation/pages/homepage.dart';
+import 'package:quoter/presentation/pages/sign_in_page.dart';
+import 'package:quoter/presentation/pages/sign_up_page.dart';
 
-final routes = GoRouter(
-  navigatorKey: _rootNavigatorKey, // Assign the global key
-  initialLocation: '/', // Start at a splash screen or initial check page
-  routes: [
-    GoRoute(
-      path: '/',
-      name: 'splash', // A temporary splash or loading route
-      builder: (context, state) =>
-          const AuthCheckerPage(), // NEW: A simple page to check auth state
-    ),
-    GoRoute(
-      path: '/signin',
-      name: 'signin',
-      builder: (context, state) => const SignIn(),
-    ),
-    GoRoute(
-      path: '/signup',
-      name: 'signup',
-      builder: (context, state) => const SignUp(), // Ensure you have this page
-    ),
-    GoRoute(
-      path: '/home',
-      name: 'home',
-      builder: (context, state) => const HomePage(),
+class AppRouter {
+  static GoRouter setupRouter(GoRouterRefreshStream authStream) {
+    return GoRouter(
+      refreshListenable:
+          authStream, // This tells GoRouter to rebuild on stream changes
+      initialLocation: '/',
       routes: [
         GoRoute(
-          path: 'favourites', // Path relative to /home
-          name: 'favourites',
-          builder: (context, state) => const FavoritesPage(),
+          path: '/',
+          name: 'authChecker',
+          builder: (context, state) => const AuthCheckerPage(),
         ),
-        // Add other nested routes under /home if any
+        GoRoute(
+          path: '/signin',
+          name: 'signin',
+          builder: (context, state) => const SignIn(), // Your actual SignInPage
+        ),
+        GoRoute(
+          path: '/signup',
+          name: 'signup',
+          builder: (context, state) => const SignUp(), // Your actual SignUpPage
+        ),
+        GoRoute(
+          path: '/home',
+          name: 'home',
+          builder: (context, state) => const HomePage(), // Your actual HomePage
+        ),
+        // Add more routes as needed
       ],
-    ),
-    // Add other top-level routes as needed
-  ],
-  // This is the core of auth flow management with GoRouter
-  redirect: (BuildContext context, GoRouterState state) {
-    // Read the current authentication state from the AuthBloc
-    final authBlocState = context.read<AuthBloc>().state;
-    final bool isAuthenticated = authBlocState is Authenticated;
-    final bool isAuthLoading =
-        authBlocState is AuthLoading || authBlocState is AuthInitial;
+      redirect: (context, state) {
+        final authBloc = context.read<AuthBloc>();
+        final authState = authBloc.state;
 
-    // List of routes that are considered 'authentication routes'
-    final bool isGoingToAuthRoute =
-        state.uri.path == '/signin' || state.uri.path == '/signup';
+        // Determine if the user is authenticated from the BLoC's current state
+        final bool isAuthenticated = authState is Authenticated;
+        final bool isUnauthenticated = authState is Unauthenticated;
+        final bool isAuthLoading = authState is AuthLoading;
 
-    // --- Logic for redirection ---
-    if (isAuthLoading) {
-      // If auth state is still loading, allow initial route to build
-      // (which should be _AuthCheckerPage to show a loading indicator)
-      return null;
-    }
+        // Paths that don't require authentication
+        final bool isOnSignIn = state.matchedLocation == '/signin';
+        final bool isOnSignUp = state.matchedLocation == '/signup';
+        final bool isOnAuthChecker = state.matchedLocation == '/';
 
-    if (!isAuthenticated) {
-      // If not authenticated, and trying to access a protected route, redirect to signin
-      // (e.g., trying to go to /home but not logged in)
-      return isGoingToAuthRoute ? null : '/signin';
-    } else {
-      // If authenticated, and trying to go to signin/signup, redirect to home
-      if (isGoingToAuthRoute) {
-        return '/home';
-      }
-    }
+        // If still loading auth state, allow access to auth checker page only
+        if (isAuthLoading) {
+          return isOnAuthChecker
+              ? null
+              : '/'; // Stay on auth checker until state is known
+        }
 
-    // No redirect needed for any other case (e.g., authenticated user going to /home)
-    return null;
-  },
-  // This tells GoRouter to re-evaluate redirects whenever AuthBloc's state changes
-  refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
-  debugLogDiagnostics: true, // Good for debugging routing issues
-);
+        // If authenticated, prevent access to sign-in/sign-up pages
+        if (isAuthenticated) {
+          if (isOnSignIn || isOnSignUp || isOnAuthChecker) {
+            return '/home'; // Redirect to home if authenticated
+          }
+        } else if (isUnauthenticated) {
+          // If unauthenticated, redirect to sign-in from protected routes
+          if (!isOnSignIn && !isOnSignUp && !isOnAuthChecker) {
+            return '/signin';
+          }
+        }
+
+        // No redirect needed, proceed to the requested location
+        return null;
+      },
+    );
+  }
+}

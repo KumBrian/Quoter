@@ -52,8 +52,8 @@ class Quote {
 
   factory Quote.fromJson(List quote, int index) {
     return Quote(
-      author: quote[index]['author']!,
-      quote: quote[index]['quote']!,
+      author: quote[index]['author'],
+      quote: quote[index]['quote'],
       isLiked: false,
     );
   }

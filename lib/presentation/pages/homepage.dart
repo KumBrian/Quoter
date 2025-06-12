@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:quoter/bloc/auth/auth_bloc.dart';
 import 'package:quoter/bloc/cubit/category_cubit.dart';
 import 'package:quoter/bloc/cubit/category_suggestion_cubit.dart';
 import 'package:quoter/bloc/cubit/swiper_cubit.dart';
@@ -122,7 +123,7 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
               ),
-              const SizedBox(height: 70), // Explicit spacing
+              const SizedBox(height: 30), // Explicit spacing
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: GestureDetector(
@@ -221,6 +222,33 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
+              Spacer(),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 32.0, vertical: 30.0),
+                child: Row(
+                  // Using Row for consistent layout with other drawer items
+                  children: [
+                    TextButton.icon(
+                      label: Text(
+                        'Logout',
+                        style: GoogleFonts.getFont(
+                          'Montserrat',
+                          fontSize: 24,
+                          color: Colors.white,
+                        ),
+                      ),
+                      icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedLogout01,
+                          color: kSecondaryDark),
+                      onPressed: () {
+                        context.pop();
+                        context.read<AuthBloc>().add(LogoutRequested());
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -278,12 +306,9 @@ class _HomePageState extends State<HomePage> {
           );
         }),
       ),
-
-      // ─── IMPORTANT: Provide SwiperCubit here for QuoteSwiper and BottomControls ───
       body: BlocProvider(
         create: (_) => SwiperCubit(),
         child: BlocConsumer<QuotesBloc, QuotesState>(
-          // --- CHANGE: Simplified buildWhen for initial load/error state for the main content
           buildWhen: (previous, current) {
             return current is QuotesLoading ||
                 current is QuotesError ||
@@ -297,21 +322,10 @@ class _HomePageState extends State<HomePage> {
                   textColor: Colors.white);
             }
             if (state is QuotesLoaded) {
-              // Reset swiper index to 0 on refresh.
-              // --- CHANGE: Only reset if not already at 0, or if quotes actually changed.
-              // This is a subtle optimization to avoid unnecessary state updates.
               if (context.read<SwiperCubit>().state != 0) {
                 context.read<SwiperCubit>().updateIndex(0);
-                _swiperController.move(0); // Also move the physical swiper
+                _swiperController.move(0);
               }
-
-              // --- REMOVED: _lastLikedIndex notification logic.
-              // This logic is better handled in the LikedQuotesBloc's listener itself
-              // or within the CustomIconButton's onTap where the like/dislike action occurs.
-              // Doing it here based on `QuotesLoaded` state is indirectly tied to the core
-              // quotes data, not directly to the liked status change.
-              // To notify on like/dislike, the LikedQuotesBloc should emit a state
-              // that a listener can react to, or the action itself triggers a snackbar.
             }
           },
           builder: (context, quoteState) {
